@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "76673791229",
+    "project_id": "paonde-app",
+    "storage_bucket": "paonde-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:76673791229:android:44b14a22b5fe978134fa94",
+        "android_client_info": {
+          "package_name": "com.example.paonde_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgqhhCc8ZZF5L6Srjre6JzkgEswd4Ps2I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
