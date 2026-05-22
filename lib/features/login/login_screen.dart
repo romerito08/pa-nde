@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_controller.dart';  // ← nuevo import
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -8,21 +9,41 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controladores para capturar el texto que escriba el usuario
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final LoginController _controller = LoginController();  // ← nueva instancia
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _controller.dispose();  // ← limpiar controlador
     super.dispose();
+  }
+
+  // ← nuevo método para manejar el login
+  Future<void> _handleLogin() async {
+    final success = await _controller.login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    if (success && mounted) {
+      // Aquí luego rediriges a Home (cuando exista)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login exitoso')),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_controller.errorMessage ?? 'Error desconocido')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1A1F16), 
+      backgroundColor: const Color(0xff1A1F16),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -32,14 +53,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo de la App 
                   const Text(
                     'pa\'onde',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xffE2E600), 
+                      color: Color(0xffE2E600),
                       letterSpacing: -1.5,
                     ),
                   ),
@@ -51,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 48),
 
-                  // Campo de Correo Electrónico
+                  // Campo correo
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -60,12 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: 'Correo Electrónico',
                       labelStyle: const TextStyle(color: Color(0xffA1A89B)),
                       prefixIcon: const Icon(Icons.email_outlined, color: Color(0xffA1A89B)),
-                      // Borde cuando la caja no está seleccionada
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Color(0xff333D2E)),
                       ),
-                      // Borde cuando el usuario hace clic para escribir (se ilumina en amarillo)
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Color(0xffE2E600)),
@@ -74,10 +92,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Campo de Contraseña
+                  // Campo contraseña
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: true, // Oculta la clave con puntitos
+                    obscureText: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
@@ -91,6 +109,43 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Color(0xffE2E600)),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Botón de Ingresar con estado de carga (modificado)
+                  ListenableBuilder(
+                    listenable: _controller,
+                    builder: (context, child) {
+                      if (_controller.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      return ElevatedButton(
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xffE2E600),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('INGRESAR', style: TextStyle(fontWeight: FontWeight.bold)),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextButton(
+                    onPressed: () {
+                      // Aquí luego rediriges a RegisterScreen (cuando exista)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pantalla de registro en construcción')),
+                      );
+                    },
+                    child: const Text(
+                      '¿No tienes cuenta? Regístrate',
+                      style: TextStyle(color: Color(0xffE2E600)),
                     ),
                   ),
                 ],

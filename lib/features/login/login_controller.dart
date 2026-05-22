@@ -1,0 +1,59 @@
+import 'package:flutter/material.dart';
+import 'login_repository.dart';
+
+class LoginController extends ChangeNotifier {
+  final LoginRepository _repository = LoginRepository();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  // Método para iniciar sesión
+  Future<bool> login(String email, String password) async {
+    _setLoading(true);
+    _clearError();
+
+    final user = await _repository.loginWithEmail(email, password);
+
+    _setLoading(false);
+
+    if (user == null) {
+      _setError('Credenciales inválidas. Verifica tu correo y contraseña.');
+      return false;
+    }
+    return true;
+  }
+
+  // Método para registrar
+  Future<bool> register(String email, String password) async {
+    _setLoading(true);
+    _clearError();
+
+    final user = await _repository.registerWithEmail(email, password);
+
+    _setLoading(false);
+
+    if (user == null) {
+      _setError('Error al registrarse. El correo podría ya estar en uso.');
+      return false;
+    }
+    return true;
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  void _setError(String message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  void _clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+}
