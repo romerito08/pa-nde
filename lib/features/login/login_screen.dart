@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1A1F16), // Verde oscuro de tu Figma
+      backgroundColor: const Color(0xff1A1F16), 
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -32,14 +32,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo de la App estilo Figma
+                  // Logo de la App 
                   const Text(
                     'pa\'onde',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xffE2E600), // Amarillo de tu Figma
+                      color: Color(0xffE2E600), 
                       letterSpacing: -1.5,
                     ),
                   ),
