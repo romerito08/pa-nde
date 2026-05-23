@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login_controller.dart';  // ← nuevo import
+import 'login_controller.dart'; 
+import '../../screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ← nuevo método para manejar el login
   Future<void> _handleLogin() async {
     final success = await _controller.login(
       _emailController.text.trim(),
@@ -29,10 +29,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      // Aquí luego rediriges a Home (cuando exista)
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login exitoso')),
-      );
+      
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_controller.errorMessage ?? 'Error desconocido')),
