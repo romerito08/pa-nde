@@ -45,31 +45,53 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff1A1F16),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Row(
+        children: [
+          Expanded (
+            child: Container( 
+              child:Stack(
                 children: [
-                  const Text(
-                    'pa\'onde',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xffE2E600),
-                      letterSpacing: -1.5,
+                  SizedBox.expand(
+                  child: Image.asset('assets/imageninicio.png', 
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Center(
+                child: FractionallySizedBox(
+                  widthFactor: 0.6, 
+                child: Image.asset('assets/Logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+                  Expanded(
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                        key: const ValueKey('from_padding'),
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                             const Text(
+                              '¿Pa\'onde vamos hoy?',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                fontSize: 35,
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 255, 255, 255),
+                                letterSpacing: -1.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Plataforma de Turismo Low-Cost y Sostenible',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Color(0xffA1A89B)),
-                  ),
+                  
+
                   const SizedBox(height: 48),
 
                   // Campo correo
@@ -121,7 +143,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (_controller.isLoading) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      return ElevatedButton(
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
                         onPressed: _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xffE2E600),
@@ -131,11 +155,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('INGRESAR', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text('Acceder', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 32),
 
                   TextButton(
                     onPressed: () {
@@ -154,6 +179,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+                    ), 
+                  ), 
+        ],
       ),
     );
   }
