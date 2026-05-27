@@ -126,7 +126,81 @@ class HomeScreen extends StatelessWidget {
                   primaryYellow: primaryYellow,
                 ),
                 const SizedBox(height: 40),
+
+                const Center(
+                  child: Text(
+                    'Descubre tu lugar en pa\'onde',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(0.1),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 129, 129, 124),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children:[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 7 ),
+                          decoration: BoxDecoration(
+                            color:primaryYellow,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'Explorardor',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical:7 ),
+                          child: const Text(
+                            'Anfitrión',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                        ),
+                      ]
+                    )
+                  )
+                ),
+                const SizedBox(height: 30),
+
                 
+                
+
+                GridView.count(
+                  shrinkWrap: true, // Permite que el GridView viva dentro del SliverList
+                  physics: const NeverScrollableScrollPhysics(), // Deja que el scroll lo maneje el CustomScrollView
+                  crossAxisCount: 3, // 3 columnas en horizontal
+                  crossAxisSpacing: 16, // Espacio horizontal entre tarjetas
+                  mainAxisSpacing: 10, // Espacio vertical (por si cambian de fila en pantallas chicas)
+                  childAspectRatio: 1.03, // Ajusta esta relación (Ancho / Alto) para controlar la altura total
+                  children: [
+                    _buildOfferCard2(
+                      icon: Icons.explore_outlined,
+                      title: 'Exploración Inteligente',
+                      description: 'Busca por destino, fechas y presupuesto. Los filtros avanzados te llevan directo a lo que necesitas, sin perder tiempo.',
+                    ),
+                    _buildOfferCard2(
+                      icon: Icons.stars_outlined,
+                      title: 'Reserva con Confianza',
+                      description: 'Cada Aliado está verificado por el equipo Pa\'onde. Lee reseñas reales antes de reservar y decide con información de verdad.',
+                    ),
+                    _buildOfferCard2(
+                      icon: Icons.check_circle_outline,
+                      title: 'Todo en un Solo Lugar',
+                      description: 'Alojamiento, experiencias y traslados juntos. Organiza tu viaje completo sin salir de la plataforma.',
+                    ),
+                  ],
+                ),
               ]),
             ),
           ),
@@ -146,7 +220,7 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardBgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,4 +248,48 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  
+
+  Widget _buildOfferCard2({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xff1C241B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(0, 226, 230, 0),
+              shape: BoxShape.circle,
+              
+            ),
+            child: Icon(icon, size: 50, color: const Color.fromARGB(221, 255, 255, 255)),
+          ),
+          
+          const SizedBox(width: 16),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffE2E600)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.4),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
 }
