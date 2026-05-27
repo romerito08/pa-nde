@@ -1,7 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'features/login/login_screen.dart';
+//import 'features/login/login_screen.dart';
 import 'firebase_options.dart'; 
+import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xff1A1F16),
       ),
-      home: const LoginScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(), // ← cambiar a LoginScreen
+        '/login': (context) => const HomeScreen(),
+      },
+    
     );
   }
 }
