@@ -71,7 +71,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   Expanded(
                     child: SafeArea(
-                      child: Padding(
+                      child: Stack(
+                      children: [
+                        // 1. El botón "X" posicionado arriba a la derecha
+                        Positioned(
+                          top: 16,  // Margen superior
+                          right: 24, // Margen derecho
+                          child: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                            onPressed: () {
+                              Navigator.pop(context); // Regresa a la HomeScreen
+                            },
+                          ),
+                        ),
+                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 48.0),
                         key: const ValueKey('from_padding'),
                         child: Center(
@@ -80,7 +93,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                             const Text(
+                              const SizedBox(height: 16),
+                              const Text(
                               '¿Pa\'onde vamos hoy?',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -179,7 +193,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+                      ],
                     ), 
+                  ),
                   ), 
         ],
       ),

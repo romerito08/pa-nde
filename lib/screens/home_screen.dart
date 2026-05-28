@@ -1,27 +1,55 @@
 import 'package:flutter/material.dart';
-// import 'features/login/login_screen.dart';
+import '../features/login/login_screen.dart';
 
-//pagina uno, como en figma
-class HomeScreen extends StatelessWidget {
+// pagina uno, como en figma
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Variable de estado: true = Explorador activo, false = Anfitrión activo
+  bool isExploradorActive = true;
 
   @override
   Widget build(BuildContext context) {
     const Color primaryYellow = Color(0xffE2E600);
     const Color cardBgColor = Color(0xff1C241B);
 
+    // Medidas de la pantalla para el diseño responsivo
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 768;
+
+    // Ajuste dinámico para que las tarjetas de abajo no crezcan hacia abajo en PC
+    double dynamicAspectRatio = 1.05;
+    if (!isMobile) {
+      if (screenWidth > 1200) {
+        dynamicAspectRatio = 1.6;
+      } else if (screenWidth > 900) {
+        dynamicAspectRatio = 1.3;
+      }
+    }
+
     return Scaffold(
+      backgroundColor: const Color(0xff1A1F16),
       body: CustomScrollView(
         slivers: [
+          // Encabezado responsivo
           SliverAppBar(
-            expandedHeight: 200.0,
+            expandedHeight: 220.0,
             floating: false,
             pinned: true,
             backgroundColor: const Color(0xff1A1F16),
-            //boton de iniciar sesion
             actions: [
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                },
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xffE2E600), width: 2),
                   backgroundColor: const Color(0xff1A1F16),
@@ -53,27 +81,24 @@ class HomeScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  SizedBox.expand(
-                    child: Image.asset(
-                      'assets/Encabezado.png',
-                      fit: BoxFit.cover,
-                    ),
+                  Image.asset(
+                    'assets/Encabezado.png',
+                    fit: BoxFit.cover,
                   ),
-
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        const SizedBox(height: 50),
                         Image.asset(
                           'assets/Logo.png',
-                          width: 250,
+                          width: isMobile ? 180 : 250,
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 12),
-
                         Image.asset(
                           'assets/eslogandos.png',
-                          width: 200,
+                          width: isMobile ? 150 : 200,
                           fit: BoxFit.contain,
                         ),
                       ],
@@ -84,131 +109,318 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                const Center(
-                  child: Text(
-                    '¿Qué te ofrecemos?',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 255, 255, 255),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+          // Cuerpo de la página contenido y limitado en su ancho máximo
+          SliverToBoxAdapter(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000), // Marco controlado a 1000px
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(
+                        child: Text(
+                          '¿Qué te ofrecemos?',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
-                _buildOfferCard(
-                  icon: Icons.maps_home_work_outlined,
-                  title: 'Alojamientos',
-                  description: 'Encuentra el hospedaje perfecto para cada tipo de viaje. Filtra por ciudad, fechas, presupuesto y tipo de alojamiento: hoteles, posadas, apartamentos y más.',
-                  cardBgColor: cardBgColor,
-                  primaryYellow: primaryYellow,
-                  ),
-                const SizedBox(height: 16),
+                      // Tarjetas Horizontales originales
+                      _buildOfferCard(
+                        icon: Icons.maps_home_work_outlined,
+                        title: 'Alojamientos',
+                        description: 'Encuentra el hospedaje perfecto para cada tipo de viaje. Filtra por ciudad, fechas, presupuesto y tipo de alojamiento: hoteles, posadas, apartamentos y más.',
+                        cardBgColor: cardBgColor,
+                        primaryYellow: primaryYellow,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildOfferCard(
+                        icon: Icons.stars_outlined,
+                        title: 'Experiencias',
+                        description: 'Descubre actividades únicas con operadores locales de confianza. Desde rutas de montaña hasta experiencias gastronómicas, siempre con reseñas verificadas.',
+                        cardBgColor: cardBgColor,
+                        primaryYellow: primaryYellow,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildOfferCard(
+                        icon: Icons.directions_car_outlined,
+                        title: 'Logística y Traslados',
+                        description: 'Viaja sin complicaciones. Encuentra experiencias y paquetes que ya incluyen el traslado al destino, asegurando que llegues de forma cómoda y segura a cada aventura.',
+                        cardBgColor: cardBgColor,
+                        primaryYellow: primaryYellow,
+                      ),
 
-                _buildOfferCard(
-                  icon: Icons.stars_outlined,
-                  title: 'Experiencias',
-                  description: 'Descubre actividades únicas con operadores locales de confianza. Desde rutas de montaña hasta experiencias gastronómicas, siempre con reseñas verificadas.',
-                  cardBgColor: cardBgColor,
-                  primaryYellow: primaryYellow,
-                ),
-                const SizedBox(height: 16),
-
-                _buildOfferCard(
-                  icon: Icons.directions_car_outlined,
-                  title: 'Logística y Traslados',
-                  description: 'Viaja sin complicaciones. Encuentra experiencias y paquetes que ya incluyen el traslado al destino, asegurando que llegues de forma cómoda y segura a cada aventura.',
-                  cardBgColor: cardBgColor,
-                  primaryYellow: primaryYellow,
-                ),
-                const SizedBox(height: 40),
-
-                const Center(
-                  child: Text(
-                    'Descubre tu lugar en pa\'onde',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 255, 255, 255),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(0.1),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 129, 129, 124),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children:[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 7 ),
+                      const SizedBox(height: 48),
+                      const Center(
+                        child: Text(
+                          "Descubre tu lugar en pa'onde",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: Container(
                           decoration: BoxDecoration(
-                            color:primaryYellow,
+                            color: const Color.fromARGB(179, 150, 150, 144),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Text(
-                            'Explorardor',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // PESTAÑA: EXPLORADOR
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    isExploradorActive = true;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: isExploradorActive ? primaryYellow : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    'Explorador',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isExploradorActive ? Colors.black87 : Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // PESTAÑA: ANFITRIÓN
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    isExploradorActive = false;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: !isExploradorActive ? primaryYellow : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    'Anfitrión',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: !isExploradorActive ? Colors.black87 : Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical:7 ),
-                          child: const Text(
-                            'Anfitrión',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // RENDERIZADO DINÁMICO SEGÚN MÓVIL O PC
+                      if (isExploradorActive) ...[
+                        if (isMobile) ...[
+                          // Diseño Vertical para telfs (Explorador)
+                          _buildOfferCard2(
+                            icon: Icons.explore_outlined,
+                            title: 'Exploración Inteligente',
+                            description: 'Busca por destino, fechas y presupuesto. Los filtros avanzados te llevan directo a lo que necesitas, sin perder tiempo.',
+                          ),
+                          const SizedBox(height: 16),
+                          _buildOfferCard2(
+                            icon: Icons.stars_outlined,
+                            title: 'Reserva con Confianza',
+                            description: "Cada Aliado está verificado por el equipo Pa'onde. Lee reseñas reales antes de reservar y decide con información de verdad.",
+                          ),
+                          const SizedBox(height: 16),
+                          _buildOfferCard2(
+                            icon: Icons.check_circle_outline,
+                            title: 'Todo en un Solo Lugar',
+                            description: 'Alojamiento, experiencias y traslados juntos. Organiza tu viaje completo sin salir de la plataforma.',
+                          ),
+                        ] else ...[
+                          // Diseño Horizontal (Grid) para Desktop / Tablet (Explorador)
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: dynamicAspectRatio,
+                            children: [
+                              _buildOfferCard2(
+                                icon: Icons.explore_outlined,
+                                title: 'Exploración Inteligente',
+                                description: 'Busca por destino, fechas y presupuesto. Los filtros avanzados te llevan directo a lo que necesitas, sin perder tiempo.',
+                              ),
+                              _buildOfferCard2(
+                                icon: Icons.stars_outlined,
+                                title: 'Reserva con Confianza',
+                                description: "Cada Aliado está verificado por el equipo Pa'onde. Lee reseñas reales antes de reservar y decide con información de verdad.",
+                              ),
+                              _buildOfferCard2(
+                                icon: Icons.check_circle_outline,
+                                title: 'Todo en un Solo Lugar',
+                                description: 'Alojamiento, experiencias y traslados juntos. Organiza tu viaje completo sin salir de la plataforma.',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ] else ...[
+                        // Sección alternativa cuando Anfitrión está activo
+                        if (isMobile) ...[
+                          // Diseño Vertical para Móviles (Anfitrión)
+                          _buildOfferCard2(
+                              icon: Icons.file_upload_outlined,
+                              title: 'Publica tu Servicio',
+                              description: 'Crea tu publicación con fotos, descripción, precios y disponibilidad. Tu negocio viable para miles de viajeros en minutos.',
+                              ),
+                          const SizedBox(height: 16),
+                          _buildOfferCard2(
+                                icon: Icons.calendar_month_outlined,
+                                title: 'Gestiona tus Reservas',
+                                description: 'Recibe solicitudes, confirma reservas y lleva el control de tu agenda desde un panel diseñado para hacerte la vida más facil',
+                              ),
+                          const SizedBox(height: 16),
+                          _buildOfferCard2(
+                             icon: Icons.bar_chart_outlined,
+                                title: 'Crece con Estadísticas',
+                                description: 'Visualiza las númericas: reservas del mes, ingresos, calificación promedio y que servrvicios ganaron más interés',
+                              ),
+                        ] else ...[
+                          // Diseño Horizontal (Grid) para Desktop / Tablet (Anfitrión)
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: dynamicAspectRatio,
+                            children: [
+                              _buildOfferCard2(
+                                icon: Icons.file_upload_outlined,
+                                title: 'Publica tu Servicio',
+                                description: 'Crea tu publicación con fotos, descripción, precios y disponibilidad. Tu negocio viable para miles de viajeros en minutos.',
+                              ),
+                              _buildOfferCard2(
+                                icon: Icons.calendar_month,
+                                title: 'Gestiona tus Reservas',
+                                description: 'Recibe solicitudes, confirma reservas y lleva el control de tu agenda desde un panel diseñado para hacerte la vida más facil',
+                              ),
+                              _buildOfferCard2(
+                                icon: Icons.bar_chart_outlined,
+                                title: 'Crece con Estadísticas',
+                                description: 'Visualiza las númericas: reservas del mes, ingresos, calificación promedio y que servrvicios ganaron más interés',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+
+                      const SizedBox(height: 48),
+                      const Center(
+                        child: Text(
+                          'Tu próxima aventura comienza aquí',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: primaryYellow,
                           ),
                         ),
-                      ]
-                    )
-                  )
-                ),
-                const SizedBox(height: 30),
+                      ),
+                      const SizedBox(height: 32),
+                      const Center(
+                        child: Text(
+                          "¿Pa'onde quieres ir?",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
-                
-                
+                      // BARRA DE BÚSQUEDA Y BOTÓN AL LADO UNIFICADOS
+                      Center(
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 600),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 40,
+                                  child: TextField(
+                                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                                    cursorColor: Colors.black,
+                                    decoration: InputDecoration(
+                                      hintText: 'Escribe un destino, experiencia o servicio...',
+                                      hintStyle: const TextStyle(color: Color.fromARGB(179, 150, 150, 144), fontSize: 14),
+                                      prefixIcon: const Icon(Icons.search, color: Color.fromARGB(179, 150, 150, 144), size: 20),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(color: Colors.white10, width: 1),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
 
-                GridView.count(
-                  shrinkWrap: true, // Permite que el GridView viva dentro del SliverList
-                  physics: const NeverScrollableScrollPhysics(), // Deja que el scroll lo maneje el CustomScrollView
-                  crossAxisCount: 3, // 3 columnas en horizontal
-                  crossAxisSpacing: 16, // Espacio horizontal entre tarjetas
-                  mainAxisSpacing: 10, // Espacio vertical (por si cambian de fila en pantallas chicas)
-                  childAspectRatio: 1.03, // Ajusta esta relación (Ancho / Alto) para controlar la altura total
-                  children: [
-                    _buildOfferCard2(
-                      icon: Icons.explore_outlined,
-                      title: 'Exploración Inteligente',
-                      description: 'Busca por destino, fechas y presupuesto. Los filtros avanzados te llevan directo a lo que necesitas, sin perder tiempo.',
-                    ),
-                    _buildOfferCard2(
-                      icon: Icons.stars_outlined,
-                      title: 'Reserva con Confianza',
-                      description: 'Cada Aliado está verificado por el equipo Pa\'onde. Lee reseñas reales antes de reservar y decide con información de verdad.',
-                    ),
-                    _buildOfferCard2(
-                      icon: Icons.check_circle_outline,
-                      title: 'Todo en un Solo Lugar',
-                      description: 'Alojamiento, experiencias y traslados juntos. Organiza tu viaje completo sin salir de la plataforma.',
-                    ),
-                  ],
+                              // BOTÓN TOTALMENTE CUADRADO (44x44)
+                              ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color.fromARGB(188, 111, 111, 111),
+                                  elevation: 0,
+                                  fixedSize: const Size(40, 40),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                child: const Icon(Icons.filter_list_outlined, size: 25),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ]),
+              ),
             ),
           ),
         ],
       ),
     );
-
   }
+
   Widget _buildOfferCard({
     required IconData icon,
     required String title,
@@ -248,44 +460,32 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  
-
   Widget _buildOfferCard2({
     required IconData icon,
     required String title,
     required String description,
   }) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xff1C241B),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(0, 226, 230, 0),
-              shape: BoxShape.circle,
-              
-            ),
-            child: Icon(icon, size: 50, color: const Color.fromARGB(221, 255, 255, 255)),
-          ),
-          
-          const SizedBox(width: 16),
+          Icon(icon, size: 36, color: Colors.white),
+          const SizedBox(height: 10),
           Text(
             title,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffE2E600)),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.4),
+            style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.3),
             textAlign: TextAlign.center,
           ),
         ],
