@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_controller.dart'; 
-import '../../screens/home_screen.dart';
+import '../../screens/inicio_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
       
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const InicioScreen()),
 );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

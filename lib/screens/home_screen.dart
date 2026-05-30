@@ -46,10 +46,13 @@ class _HomeScreenState extends State<HomeScreen> {
           SliverAppBar(
             expandedHeight: 220.0,
             floating: false,
-            pinned: true,
+            pinned: false,
             backgroundColor: const Color(0xff1A1F16),
             actions: [
-              OutlinedButton(
+
+              SizedBox(
+              height: isMobile ? 32:40, // Espacio a la derecha para que no quede pegado al borde
+              child: OutlinedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -66,10 +69,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Iniciar Sesión'),
+                child: Text('Iniciar Sesión',
+                    style: TextStyle(fontWeight: FontWeight.bold,
+                    fontSize: isMobile ? 12 : 14
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(width: 10),
-              ElevatedButton(
+              const SizedBox(width: 8),
+              SizedBox(
+
+              height: isMobile ? 32 : 40, // Espacio a la derecha para que
+              child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xffE2E600),
@@ -77,13 +88,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                 
                 ),
-                child: const Text(
+                child: Text(
                   'Registrarse',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold,
+                    fontSize: isMobile ? 12 : 14
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -549,57 +564,63 @@ class _HomeScreenState extends State<HomeScreen> {
                         viewportFraction: isMobile
                             ? 0.65
                             : 0.35, // Muestra 4 tarjetas completas en desktop
-                        height: 150,
+                        height: isMobile ? 120: 150,
                         items: List.generate(
                           6,
                           (index) => _buildExperienciaPlaceholderCard(),
                         ),
                       ),
 
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 16 ),
                       const Divider(
                         color: primaryYellow ,
                         thickness: 1,         
                         indent: 0,           
                         endIndent: 0,        
                       ),
-                     const SizedBox(height: 20),
-
                       // NUEVA SECCIÓN: Footer / Barra de navegación inferior
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      // MODIFICACIÓN: Reducimos el padding inferior para pegarlo más al borde de la página
+                        padding: EdgeInsets.only(
+                          top: isMobile ? 4.0 : 8.0,
+                          bottom: isMobile ? 0.0 : 4.0 // Menos espacio abajo si es móvil
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center, // Alinea verticalmente el logo y los textos
                           children: [
-                            // LADO IZQUIERDO: Logo o Texto de la Marca
-                            Row(
-                              children: [
-                                Text(
-                                  "pa'onde",
-                                  style: TextStyle(
-                                    fontSize: isMobile ? 22 : 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryYellow,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
                             
-                            //  Enlaces de Navegación
-                            Row(
-                              children: [
-                                _buildFooterLink('Sobre Nosotros', isMobile),
-                                SizedBox(width: isMobile ? 12 : 24),
-                                _buildFooterLink('Sé un Aliado', isMobile),
-                                SizedBox(width: isMobile ? 12 : 24),
-                                _buildFooterLink('Ayuda', isMobile),
-                              ],
+                            Image.asset(
+                               'assets/logo.png', 
+                               width: isMobile ? 80: 150, 
+                                fit: BoxFit.contain,
+                                 // Alinea el logo a la izquierda dentro de su espacio
+                              ),
+                            
+
+                            // LADO DERECHO: Enlaces que se mantienen horizontales
+                            Flexible(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min, // Ocupa solo el espacio necesario
+                                children: [
+                                  _buildFooterLink('Sobre Nosotros', isMobile, () {
+                                    Navigator.pushNamed(context, '/sobre-nosotros');
+                                  }),
+                                  SizedBox(width: isMobile ? 6 : 20), // Espaciado más ajustado en móvil
+                                  _buildFooterLink('Sé un Aliado', isMobile, () {
+                                    Navigator.pushNamed(context, '/se-un-aliado');
+                                  }),
+                                  SizedBox(width: isMobile ? 6 : 20),
+                                  _buildFooterLink('Ayuda', isMobile, () {
+                                    Navigator.pushNamed(context, '/ayuda');
+                                  }),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-
                     ],
                   ),
                 ),
@@ -610,25 +631,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-Widget _buildFooterLink(String title, bool isMobile) {
-    return InkWell(
-      onTap: () {
-        // Añade la acción o navegación correspondiente aquí
-      },
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: isMobile ? 13 : 15,
-            fontWeight: FontWeight.w500,
-          ),
+Widget _buildFooterLink(String title, bool isMobile, VoidCallback onTap) {
+  return InkWell(
+    onTap: onTap, // <--- Aquí se ejecuta la acción personalizada
+    borderRadius: BorderRadius.circular(4),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: isMobile ? 13 : 15,
+          fontWeight: FontWeight.w500,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+  
   Widget _buildOfferCard({
     required IconData icon,
     required String title,
