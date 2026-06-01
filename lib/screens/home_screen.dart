@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../features/login/login_screen.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:paonde_app/features/register/registro_screen.dart';
 
-// pagina uno, como en figma
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
 
               SizedBox(
-              height: isMobile ? 32:40, // Espacio a la derecha para que no quede pegado al borde
+              height: isMobile ? 32:40, 
               child: OutlinedButton(
                 onPressed: () {
                   Navigator.push(
@@ -79,9 +79,16 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               SizedBox(
 
-              height: isMobile ? 32 : 40, // Espacio a la derecha para que
+              height: isMobile ? 32 : 40,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RegistroScreen(),
+              )
+            );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xffE2E600),
                   foregroundColor: Colors.black,
