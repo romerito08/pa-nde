@@ -97,7 +97,13 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
       case 2:
         Navigator.pushReplacementNamed(context, '/experiencias');
         break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/destino');
+        break;
       // Añade los demás casos cuando crees tus pantallas correspondientes
+      case 4:
+        Navigator.pushReplacementNamed(context, '/reservas');
+        break;
     }
   }
   @override

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import '../widgets/footer.dart';
 import '../widgets/header.dart';
 import '../widgets/drawer.dart';
-import '../widgets/experiencia_card.dart';
+import '../widgets/destino_card.dart';
 
-class ExperienciaScreen extends StatefulWidget {
-  const ExperienciaScreen({super.key});
+class DestinoScreen extends StatefulWidget {
+  const DestinoScreen({super.key});
 
   @override
-  State<ExperienciaScreen> createState() => _ExperienciaScreenState();
+  State<DestinoScreen> createState() => _DestinoScreenState();
 }
 
-class _ExperienciaScreenState extends State<ExperienciaScreen> {
+class _DestinoScreenState extends State<DestinoScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -24,12 +24,12 @@ class _ExperienciaScreenState extends State<ExperienciaScreen> {
       backgroundColor: bgColor,
 
       drawer: isMobile ? CustomDrawer(selectedIndex: 0) : null,
-      appBar: isMobile ? Header(selectedIndex: 2, isMobile: true) : null,
+      appBar: isMobile ? Header(selectedIndex: 3, isMobile: true) : null,
       body: SingleChildScrollView(
         child: Column(
           children: [
             // 3. HEADER PARA ESCRITORIO (Solo se dibuja si NO es móvil)
-            if (!isMobile) Header(isMobile: false, selectedIndex: 2),
+            if (!isMobile) Header(isMobile: false, selectedIndex: 3),
 
             Stack(
               alignment: Alignment.center,
@@ -182,7 +182,6 @@ class _ExperienciaScreenState extends State<ExperienciaScreen> {
 
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          
                           int crossAxisCount = 3;
                           if (screenWidth < 600) {
                             crossAxisCount = 1;
@@ -191,32 +190,30 @@ class _ExperienciaScreenState extends State<ExperienciaScreen> {
                           } else if (screenWidth < 1100) {
                             crossAxisCount = 3;
                           }
-                      
+
                           return GridView.builder(
-                            shrinkWrap: true, // Permite que funcione dentro de un SingleChildScrollView
-                            physics: const NeverScrollableScrollPhysics(), // El scroll lo maneja la pantalla completa
+                            shrinkWrap:
+                                true, // Permite que funcione dentro de un SingleChildScrollView
+                            physics:
+                                const NeverScrollableScrollPhysics(), // El scroll lo maneja la pantalla completa
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 16, // Espacio horizontal entre tarjetas
-                              mainAxisSpacing: 20,    // Espacio vertical entre filas
+                              crossAxisSpacing:
+                                  16, // Espacio horizontal entre tarjetas
+                              mainAxisSpacing:
+                                  20, // Espacio vertical entre filas
                               // Importante: Ajusta esta proporción según cómo quieras que se vea de alta la tarjeta
-                              childAspectRatio: isMobile ? 2.5 : 2.0, 
+                              childAspectRatio: isMobile ? 2.5 : 2.0,
                             ),
-                            itemCount: 12, // la longitud de tu lista real de alojamientos
+                            itemCount:
+                                12, // la longitud de tu lista real de alojamientos
                             itemBuilder: (context, index) {
-                              return ExperienciaCard(
-                                onReservar: () {
-                                  print('Reservado  $index');
-                                },
-                                onFavorito: () {
-                                  print('Agregado a favorito $index');
-                                },
-                              );
+                              return DestinoCard();
                             },
                           );
                         },
                       ),
-                    
+
                       const SizedBox(height: 40),
 
                       const Divider(

@@ -70,6 +70,13 @@ class CustomDrawer extends StatelessWidget {
       case 2:
         Navigator.pushReplacementNamed(context, '/experiencias');
         break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/destino');
+        break;
+
+      case 4:
+        Navigator.pushReplacementNamed(context, '/reservas');
+        break;
       
     }
   }

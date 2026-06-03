@@ -8,6 +8,8 @@ import 'screens/home_screen.dart';
 import 'screens/inicio_screen.dart';
 //import 'screens/alojamientos_screen.dart';
 import 'screens/experiencias_screens.dart';
+import 'screens/destinos_screen.dart';
+import 'screens/reservas_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +35,8 @@ class MyApp extends StatelessWidget {
         '/inicio': (context) => const InicioScreen(),
         '/alojamientos': (context) => const AlojamientosScreen(),
         '/experiencias': (context) => const ExperienciaScreen(),
+        '/destino': (context) => const DestinoScreen(), // ← pantalla de destinos
+        '/reservas': (context) => const ReservaScreen(), // 
       },
     );
   }
