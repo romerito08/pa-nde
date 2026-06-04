@@ -3,6 +3,7 @@ import '../widgets/footer.dart';
 import '../widgets/header.dart';
 import '../widgets/drawer.dart';
 import '../widgets/alojamiento_card.dart';
+import 'reservas_screen.dart';
 
 
 class AlojamientosScreen extends StatefulWidget {
@@ -225,10 +226,20 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
                             itemBuilder: (context, index) {
                               return AlojamientoCard(
                                 onReservar: () {
-                                  print('Reservado alojamiento $index');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ReservaScreen(),
+                                    ),
+                                  );
                                 },
                                 onFavorito: () {
-                                  print('Agregado a favorito $index');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ReservaScreen(),
+                                    ),
+                                  );
                                 },
                               );
                             },

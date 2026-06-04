@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../features/login/login_screen.dart';
+//import '../features/login/login_screen.dart';
 import '../widgets/alojamiento_card.dart';
 import '../widgets/carousel_section.dart';
 import '../widgets/destino_card.dart';
@@ -7,6 +7,7 @@ import '../widgets/experiencia_card.dart';
 import '../widgets/footer.dart';
 import '../widgets/header.dart';
 import '../widgets/drawer.dart';
+import 'reservas_screen.dart';
 
 class InicioScreen extends StatefulWidget {
   const InicioScreen({super.key});
@@ -235,13 +236,13 @@ class _InicioScreenState extends State<InicioScreen> {
                             onReservar: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                             onFavorito: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                           ),
@@ -261,13 +262,13 @@ class _InicioScreenState extends State<InicioScreen> {
                             onReservar: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                             onFavorito: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                           ),
@@ -295,13 +296,13 @@ class _InicioScreenState extends State<InicioScreen> {
                             onReservar: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                             onFavorito: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                           ),
@@ -321,13 +322,13 @@ class _InicioScreenState extends State<InicioScreen> {
                             onReservar: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                             onFavorito: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const ReservaScreen(),
                               ),
                             ),
                           ),

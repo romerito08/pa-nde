@@ -3,6 +3,7 @@ import '../widgets/footer.dart';
 import '../widgets/header.dart';
 import '../widgets/drawer.dart';
 import '../widgets/experiencia_card.dart';
+import 'reservas_screen.dart';
 
 class ExperienciaScreen extends StatefulWidget {
   const ExperienciaScreen({super.key});
@@ -206,10 +207,20 @@ class _ExperienciaScreenState extends State<ExperienciaScreen> {
                             itemBuilder: (context, index) {
                               return ExperienciaCard(
                                 onReservar: () {
-                                  print('Reservado  $index');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ReservaScreen(),
+                                    ),
+                                  );
                                 },
                                 onFavorito: () {
-                                  print('Agregado a favorito $index');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ReservaScreen(),
+                                    ),
+                                  );
                                 },
                               );
                             },
