@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/login/login_screen.dart';
 
-
-
 import '../../widgets/alojamiento_card.dart';
 import '../../widgets/experiencia_card.dart';
 import '../../widgets/destino_card.dart';
@@ -11,7 +9,7 @@ import '../../widgets/carousel_section.dart';
 
 //import 'package:carousel_slider/carousel_slider.dart';
 import 'package:paonde_app/features/register/registro_screen.dart';
-
+// import 'hotel_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,8 +21,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // Variable de estado: true = Explorador activo, false = Anfitrión activo
   bool isExploradorActive = true;
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: const Color(0xff1A1F16),
             actions: [
               SizedBox(
-
                 height: isMobile
-                    ? 32: 40, // Espacio a la derecha para que no quede pegado al borde
+                    ? 32
+                    : 40, // Espacio a la derecha para que no quede pegado al borde
                 child: OutlinedButton(
                   onPressed: () {
                     Navigator.push(
@@ -74,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: const Color(0xff1A1F16),
                     foregroundColor: const Color(0xffE2E600),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),            
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Text(
@@ -93,18 +89,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                  builder: (context) => RegistroScreen(),
-                )
-              );
-            },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffE2E600),
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      context,
+                      MaterialPageRoute(builder: (context) => RegistroScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffE2E600),
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: Text(
                     'Registrarse',
@@ -117,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 8),
             ],
-        
+
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -427,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 16),
 
                       // BARRA DE BÚSQUEDA Y BOTÓN AL LADO UNIFICADOS
-                       Center(
+                      Center(
                         child: Container(
                           constraints: const BoxConstraints(maxWidth: 600),
                           child: Row(
@@ -512,10 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   padding: EdgeInsets.zero,
                                 ),
-                                child: const Icon(
-                                  Icons.tune,
-                                  size: 25,
-                                ),
+                                child: const Icon(Icons.tune, size: 25),
                               ),
                             ],
                           ),
@@ -529,7 +520,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         viewportFraction: isMobile ? 0.6 : 0.23,
                         items: List.generate(6, (index) => DestinoCard()),
                       ),
-                      
 
                       const SizedBox(height: 40),
 
@@ -550,13 +540,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         items: List.generate(
                           6,
                           (index) => AlojamientoCard(
-                            onReservar: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen())),
-                            onFavorito: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen())),
+                            onReservar: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            ),
+                            onFavorito: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            ),
                           ),
                         ),
                       ),
 
-                      
                       const SizedBox(height: 40),
 
                       CarouselSection(
@@ -567,8 +566,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         items: List.generate(
                           6,
                           (index) => ExperienciaCard(
-                            onReservar: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen())),
-                            onFavorito: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen())),
+                            onReservar: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            ),
+                            onFavorito: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -655,8 +664,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  
 
   Widget _buildOfferCard({
     required IconData icon,
@@ -746,4 +753,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
