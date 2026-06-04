@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../features/login/login_screen.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:paonde_app/features/register/registro_screen.dart';
+import 'hotel_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -554,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 310,
                         items: List.generate(
                           6,
-                          (index) => _buildAlojamientoPlaceholderCard(),
+                          (index) => _buildAlojamientoPlaceholderCard(context),
                         ),
                       ),
                       const SizedBox(height: 40),
@@ -1008,7 +1009,7 @@ Widget _buildExperienciaPlaceholderCard() {
 
 }
 
-Widget _buildAlojamientoPlaceholderCard() {
+Widget _buildAlojamientoPlaceholderCard(BuildContext context) {
   return Container(
     margin: const EdgeInsets.only(right: 16),
     decoration: BoxDecoration(
@@ -1108,7 +1109,15 @@ Widget _buildAlojamientoPlaceholderCard() {
                       child: SizedBox(
                         height: 30,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Por ahora usamos un ID de ejemplo. Luego lo reemplazaremos.
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HotelDetailScreen(hotelId: 'hotel_prueba_001'),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff1A1F16),
                             shape: RoundedRectangleBorder(
