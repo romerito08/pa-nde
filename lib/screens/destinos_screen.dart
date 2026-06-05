@@ -1,61 +1,36 @@
 import 'package:flutter/material.dart';
-//import '../features/login/login_screen.dart';
-import '../widgets/alojamiento_card.dart';
-import '../widgets/carousel_section.dart';
-import '../widgets/destino_card.dart';
-import '../widgets/experiencia_card.dart';
 import '../widgets/footer.dart';
 import '../widgets/header.dart';
 import '../widgets/drawer.dart';
-import 'reservas_screen.dart';
-import 'hotel_detail_screen.dart';
+import '../widgets/destino_card.dart';
 
-class InicioScreen extends StatefulWidget {
-  const InicioScreen({super.key});
+class DestinoScreen extends StatefulWidget {
+  const DestinoScreen({super.key});
 
   @override
-  State<InicioScreen> createState() => _InicioScreenState();
+  State<DestinoScreen> createState() => _DestinoScreenState();
 }
 
-class _InicioScreenState extends State<InicioScreen> {
-  // Variable para controlar qué opción está seleccionada actualmente
-  // 0: Inicio, 1: Alojamientos, 2: Experiencias, 3: Destinos, 4: Reservas, 5: Mi perfil
-  
-
+class _DestinoScreenState extends State<DestinoScreen> {
   @override
   Widget build(BuildContext context) {
-    // Detectamos el ancho de la pantalla
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 817;
 
     const Color primaryYellow = Color(0xffE2E600);
     const Color bgColor = Color(0xff1A1F16);
+
     return Scaffold(
       backgroundColor: bgColor,
 
-      // 1. MENÚ LATERAL (DRAWER) PARA MÓVILES
-      // Contiene las 6 opciones requeridas organizadas verticalmente para que no se desborden
-      drawer: isMobile
-          ? const CustomDrawer(
-              selectedIndex: 0
-                ): null,
-
-      // 2. APPBAR PARA MÓVILES
-      // Añade el botón de menú tipo hamburguesa de manera nativa para abrir el Drawer
-      appBar: isMobile
-          ? const Header(selectedIndex: 0, isMobile: true) : null,
-
+      drawer: isMobile ? CustomDrawer(selectedIndex: 0) : null,
+      appBar: isMobile ? Header(selectedIndex: 3, isMobile: true) : null,
       body: SingleChildScrollView(
         child: Column(
           children: [
             // 3. HEADER PARA ESCRITORIO (Solo se dibuja si NO es móvil)
-            if (!isMobile)
-              Header(
-                
-                selectedIndex: 0, isMobile: false
-              ),
+            if (!isMobile) Header(isMobile: false, selectedIndex: 3),
 
-            // 4. HERO SECTION (Adaptable en tamaño)
             Stack(
               alignment: Alignment.center,
               children: [
@@ -84,7 +59,6 @@ class _InicioScreenState extends State<InicioScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 40),
 
             Center(
@@ -112,8 +86,6 @@ class _InicioScreenState extends State<InicioScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // BARRA DE BÚSQUEDA
                       Center(
                         child: Container(
                           constraints: const BoxConstraints(maxWidth: 600),
@@ -208,134 +180,41 @@ class _InicioScreenState extends State<InicioScreen> {
 
                       const SizedBox(height: 40),
 
-                      CarouselSection(
-                        title: "Descubre Venezuela",
-                        height: 140,
-                        viewportFraction: isMobile ? 0.6 : 0.23,
-                        items: List.generate(6, (index) => DestinoCard()),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount = 3;
+                          if (screenWidth < 600) {
+                            crossAxisCount = 1;
+                          } else if (screenWidth < 900) {
+                            crossAxisCount = 2;
+                          } else if (screenWidth < 1100) {
+                            crossAxisCount = 3;
+                          }
+
+                          return GridView.builder(
+                            shrinkWrap:
+                                true, // Permite que funcione dentro de un SingleChildScrollView
+                            physics:
+                                const NeverScrollableScrollPhysics(), // El scroll lo maneja la pantalla completa
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing:
+                                  16, // Espacio horizontal entre tarjetas
+                              mainAxisSpacing:
+                                  20, // Espacio vertical entre filas
+                              // Importante: Ajusta esta proporción según cómo quieras que se vea de alta la tarjeta
+                              childAspectRatio: isMobile ? 2.5 : 2.0,
+                            ),
+                            itemCount:
+                                12, // la longitud de tu lista real de alojamientos
+                            itemBuilder: (context, index) {
+                              return DestinoCard();
+                            },
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 40),
-
-                      const Text(
-                        "Servicios destacados",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: primaryYellow,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      CarouselSection(
-                        title: "Alojamientos",
-                        isSubSection: true,
-                        height: 310,
-                        viewportFraction: isMobile ? 0.85 : 0.25,
-                        items: List.generate(
-                          6,
-                          (index) => AlojamientoCard(
-                            onReservar: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HotelDetailScreen(hotelId: 'hotel_prueba_001'),
-                              ),
-                            ),
-                            onFavorito: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ReservaScreen(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      CarouselSection(
-                        title: "Experiencias",
-                        isSubSection: true,
-                        height: isMobile ? 120 : 150,
-                        viewportFraction: isMobile ? 0.65 : 0.35,
-                        items: List.generate(
-                          6,
-                          (index) => ExperienciaCard(
-                            onReservar: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HotelDetailScreen(hotelId: 'hotel_prueba_001'),
-                              ),
-                            ),
-                            onFavorito: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ReservaScreen(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      const Text(
-                        "Aprovecha las ofertas",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: primaryYellow,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      CarouselSection(
-                        title: "Alojamientos",
-                        isSubSection: true,
-                        height: 310,
-                        viewportFraction: isMobile ? 0.85 : 0.25,
-                        items: List.generate(
-                          6,
-                          (index) => AlojamientoCard(
-                            onReservar: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HotelDetailScreen(hotelId: 'hotel_prueba_001'),
-                              ),
-                            ),
-                            onFavorito: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ReservaScreen(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      CarouselSection(
-                        title: "Experiencias",
-                        isSubSection: true,
-                        height: isMobile ? 120 : 150,
-                        viewportFraction: isMobile ? 0.65 : 0.35,
-                        items: List.generate(
-                          6,
-                          (index) => ExperienciaCard(
-                            onReservar: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HotelDetailScreen(hotelId: 'hotel_prueba_001'),
-                              ),
-                            ),
-                            onFavorito: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ReservaScreen(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
 
                       const Divider(
                         color: primaryYellow,
@@ -343,7 +222,6 @@ class _InicioScreenState extends State<InicioScreen> {
                         indent: 0,
                         endIndent: 0,
                       ),
-                      // NUEVA SECCIÓN: Footer / Barra de navegación inferior
                       Padding(
                         // MODIFICACIÓN: Reducimos el padding inferior para pegarlo más al borde de la página
                         padding: EdgeInsets.only(

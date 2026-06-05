@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'login_controller.dart'; 
-import '../../screens/inicio_screen.dart';
+import '../features/login/login_controller.dart'; 
+import 'inicio_screen.dart';
+
+import '../features/register/registro_screen.dart'; // ← Importa la pantalla de registro
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -178,9 +180,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   TextButton(
                     onPressed: () {
-                      // Aquí luego rediriges a RegisterScreen (cuando exista)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Pantalla de registro en construcción')),
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (context) => const RegistroScreen(),
+                          ),
                       );
                     },
                     child: const Text(

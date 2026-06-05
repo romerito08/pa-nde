@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../services/hotel_service.dart';
 import '../services/review_service.dart';
 import '../models/hotel.dart';
@@ -22,6 +23,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🟢 initState: hotelId = ${widget.hotelId}');
     _hotelFuture = _hotelService.getHotelById(widget.hotelId);
   }
 
@@ -35,13 +37,17 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       );
       _commentController.clear();
       _selectedRating = 5;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Comentario agregado')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Comentario agregado')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -59,6 +65,11 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
             return const Center(child: Text('Hotel no encontrado'));
           }
           final hotel = snapshot.data!;
+
+          // Creamos el stream SOLO después de que el hotel está cargado
+          final Stream<List<Review>> reviewsStream =
+              _reviewService.getReviewsForHotel(widget.hotelId);
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -68,11 +79,23 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: hotel.imagenUrl.isNotEmpty
-                      ? Image.network(hotel.imagenUrl, height: 200, width: double.infinity, fit: BoxFit.cover)
-                      : Container(height: 200, color: Colors.grey[300], child: const Icon(Icons.image_not_supported)),
+                      ? Image.network(
+                          hotel.imagenUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          height: 200,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.image_not_supported),
+                        ),
                 ),
                 const SizedBox(height: 16),
-                Text(hotel.nombre, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(
+                  hotel.nombre,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Text('📍 ${hotel.ubicacion}'),
                 Text('💰 ${hotel.precioPorNoche}\$/noche'),
@@ -81,8 +104,12 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                 const SizedBox(height: 16),
                 Text(hotel.descripcion),
                 const SizedBox(height: 32),
-                const Text('Comentarios', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Comentarios',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
+
                 // Formulario para agregar comentario
                 Card(
                   child: Padding(
@@ -95,9 +122,13 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                             DropdownButton<int>(
                               value: _selectedRating,
                               items: List.generate(5, (i) => i + 1)
-                                  .map((e) => DropdownMenuItem(value: e, child: Text('$e ⭐')))
+                                  .map((e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text('$e ⭐'),
+                                      ))
                                   .toList(),
-                              onChanged: (v) => setState(() => _selectedRating = v!),
+                              onChanged: (v) =>
+                                  setState(() => _selectedRating = v!),
                             ),
                           ],
                         ),
@@ -110,22 +141,33 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                           maxLines: 3,
                         ),
                         const SizedBox(height: 12),
-                        ElevatedButton(onPressed: _submitReview, child: const Text('Enviar Comentario')),
+                        ElevatedButton(
+                          onPressed: _submitReview,
+                          child: const Text('Enviar Comentario'),
+                        ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Lista de comentarios
+
+                // StreamBuilder para mostrar los comentarios (con initialData)
                 StreamBuilder<List<Review>>(
-                  stream: _reviewService.getReviewsForHotel(widget.hotelId),
+                  stream: reviewsStream,
+                  initialData: const [], 
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                    debugPrint(
+                        '🔍 StreamBuilder - hotelId: ${widget.hotelId}, data length: ${snapshot.data?.length}, state: ${snapshot.connectionState}, error: ${snapshot.error}');
+
+                    if (snapshot.hasError) {
+                      return Center(
+                          child: Text('Error al cargar comentarios: ${snapshot.error}'));
                     }
+
                     final reviews = snapshot.data ?? [];
                     if (reviews.isEmpty) {
-                      return const Center(child: Text('Aún no hay comentarios. Sé el primero.'));
+                      return const Center(
+                          child: Text('Aún no hay comentarios. Sé el primero.'));
                     }
                     return ListView.builder(
                       shrinkWrap: true,
@@ -135,7 +177,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                         final rev = reviews[index];
                         return Card(
                           child: ListTile(
-                            leading: CircleAvatar(child: Text(rev.nombreUsuario[0])),
+                            leading: CircleAvatar(
+                                child: Text(rev.nombreUsuario[0])),
                             title: Text(rev.nombreUsuario),
                             subtitle: Text(rev.texto),
                             trailing: Text('⭐ ${rev.calificacion}'),
