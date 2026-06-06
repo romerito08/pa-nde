@@ -388,10 +388,7 @@ class _InicioScreenState extends State<InicioScreen> {
                                     title: 'Sé un Aliado',
                                     isMobile: isMobile,
                                     onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/se-un-aliado',
-                                      );
+                                      Navigator.pushNamed(context, '/partner-register');
                                     },
                                   ),
                                   SizedBox(width: isMobile ? 6 : 20),

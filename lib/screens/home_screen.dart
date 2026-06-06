@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import '../features/login/login_screen.dart';
 
 import '../../widgets/alojamiento_card.dart';
 import '../../widgets/experiencia_card.dart';
@@ -9,7 +9,6 @@ import '../../widgets/carousel_section.dart';
 
 //import 'package:carousel_slider/carousel_slider.dart';
 import 'package:paonde_app/features/register/registro_screen.dart';
-import 'hotel_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -634,10 +633,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     title: 'Sé un Aliado',
                                     isMobile: isMobile,
                                     onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/se-un-aliado',
-                                      );
+                                      Navigator.pushNamed(context, '/partner-register');
                                     },
                                   ),
                                   SizedBox(width: isMobile ? 6 : 20),

@@ -84,8 +84,9 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
 
   // Función lógica que maneja a dónde ir según el índice pulsado
   void _manejarNavegacion(BuildContext context, int index) {
-    if (index == selectedIndex)
+    if (index == selectedIndex) {
       return; // Si ya está en la pantalla, no hace nada
+    }
 
     switch (index) {
       case 0:
