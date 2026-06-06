@@ -13,6 +13,7 @@ import 'features/partner/partner_dashboard_screen.dart';
 import 'features/partner/partner_hotels_screen.dart';
 import 'features/partner/create_hotel_screen.dart';
 import 'features/partner/edit_hotel_screen.dart';
+import 'screens/perfil_screen.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/partner-dashboard': (context) => const PartnerDashboardScreen(),
         '/partner-hotels': (context) => const PartnerHotelsScreen(),
         '/create-hotel': (context) => const CreateHotelScreen(),
+        '/perfil': (context) => const PerfilScreen(), 
       },
       onGenerateRoute: (settings) {
         // Ruta que recibe argumentos (hotelId)
@@ -53,7 +55,6 @@ class MyApp extends StatelessWidget {
             builder: (context) => EditHotelScreen(hotelId: hotelId),
           );
         }
-        // Si no es una ruta especial, se usa el sistema normal de rutas
         return null;
       },
     );

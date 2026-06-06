@@ -26,12 +26,26 @@ class LoginController extends ChangeNotifier {
     return true;
   }
 
-  // Método para registrar
-  Future<bool> register(String email, String password) async {
+  // Método para registrar un usuario explorador (con datos adicionales)
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String nombre,
+    required String apellido,
+    required String estado,
+    required String municipio,
+  }) async {
     _setLoading(true);
     _clearError();
 
-    final user = await _repository.registerWithEmail(email, password);
+    final user = await _repository.registerWithEmail(
+      email: email,
+      password: password,
+      nombre: nombre,
+      apellido: apellido,
+      estado: estado,
+      municipio: municipio,
+    );
 
     _setLoading(false);
 

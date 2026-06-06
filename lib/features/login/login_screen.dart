@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_controller.dart';
 import '../../screens/inicio_screen.dart';
 import '../register/registro_screen.dart';
-import '../partner/partner_dashboard_screen.dart'; // ← para redirigir aliados
+import '../partner/partner_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,30 +33,23 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      // Obtener el usuario autenticado
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         try {
-          // Buscar el documento del usuario en Firestore
           final doc = await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
               .get();
           final role = doc.data()?['role'] ?? 'explorer';
-
           if (role == 'partner') {
-            // Redirigir al Dashboard del Aliado
             Navigator.pushReplacementNamed(context, '/partner-dashboard');
           } else {
-            // Redirigir a la pantalla principal de explorador
             Navigator.pushReplacementNamed(context, '/inicio');
           }
         } catch (e) {
-          // Si hay error al leer el rol, asumir explorador
           Navigator.pushReplacementNamed(context, '/inicio');
         }
       } else {
-        // Fallback por si no hay usuario (no debería ocurrir)
         Navigator.pushReplacementNamed(context, '/inicio');
       }
     } else if (mounted) {
@@ -112,7 +105,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 48.0),
-                    key: const ValueKey('from_padding'),
                     child: Center(
                       child: SingleChildScrollView(
                         child: Column(
@@ -126,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 35,
                                 fontWeight: FontWeight.bold,
-                                color: Color.fromARGB(255, 255, 255, 255),
+                                color: Colors.white,
                                 letterSpacing: -1.5,
                               ),
                             ),
@@ -174,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 32),
 
-                            // Botón de Ingresar
+                            // Botón Acceder
                             ListenableBuilder(
                               listenable: _controller,
                               builder: (context, child) {
