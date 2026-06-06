@@ -1,12 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:paonde_app/features/login/login_screen.dart';
+import 'features/login/login_screen.dart';
 import 'package:paonde_app/screens/alojamientos_screen.dart';
-//import 'features/login/login_screen.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/inicio_screen.dart';
-//import 'screens/alojamientos_screen.dart';
 import 'screens/experiencias_screens.dart';
 import 'screens/destinos_screen.dart';
 import 'screens/reservas_screen.dart';
@@ -35,18 +33,28 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const HomeScreen(), // ← cambiar a LoginScreen
+        '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/inicio': (context) => const InicioScreen(),
         '/alojamientos': (context) => const AlojamientosScreen(),
         '/experiencias': (context) => const ExperienciaScreen(),
-        '/destino': (context) => const DestinoScreen(), // ← pantalla de destinos
-        '/reservas': (context) => const ReservaScreen(), // 
+        '/destino': (context) => const DestinoScreen(),
+        '/reservas': (context) => const ReservaScreen(),
         '/partner-register': (context) => const PartnerRegisterScreen(),
         '/partner-dashboard': (context) => const PartnerDashboardScreen(),
         '/partner-hotels': (context) => const PartnerHotelsScreen(),
         '/create-hotel': (context) => const CreateHotelScreen(),
-        '/edit-hotel': (context) => const EditHotelScreen(hotelId: ''), // No podemos pasar argumentos así
+      },
+      onGenerateRoute: (settings) {
+        // Ruta que recibe argumentos (hotelId)
+        if (settings.name == '/edit-hotel') {
+          final hotelId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => EditHotelScreen(hotelId: hotelId),
+          );
+        }
+        // Si no es una ruta especial, se usa el sistema normal de rutas
+        return null;
       },
     );
   }
