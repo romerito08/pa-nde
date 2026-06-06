@@ -10,7 +10,7 @@ class LoginController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // Método para iniciar sesión
+  // Método para iniciar sesión (se mantiene igual)
   Future<bool> login(String email, String password) async {
     _setLoading(true);
     _clearError();
@@ -26,12 +26,27 @@ class LoginController extends ChangeNotifier {
     return true;
   }
 
-  // Método para registrar
-  Future<bool> register(String email, String password) async {
+  // CORRECCIÓN: Ahora el método acepta de forma nombrada (con {}) todos los datos requeridos
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String nombre,
+    required String apellido,
+    required String estado,
+    required String municipio,
+  }) async {
     _setLoading(true);
     _clearError();
 
-    final user = await _repository.registerWithEmail(email, password);
+    // Enviamos de forma correcta todos los datos hacia el repositorio actualizado
+    final user = await _repository.registerWithEmail(
+      email: email,
+      password: password,
+      nombre: nombre,
+      apellido: apellido,
+      estado: estado,
+      municipio: municipio,
+    );
 
     _setLoading(false);
 

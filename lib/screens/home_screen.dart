@@ -9,7 +9,7 @@ import '../../widgets/carousel_section.dart';
 
 //import 'package:carousel_slider/carousel_slider.dart';
 import 'package:paonde_app/features/register/registro_screen.dart';
-import 'hotel_detail_screen.dart';
+//import 'hotel_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

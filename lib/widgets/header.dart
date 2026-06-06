@@ -104,6 +104,9 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
       case 4:
         Navigator.pushReplacementNamed(context, '/reservas');
         break;
+      case 5:
+        Navigator.pushReplacementNamed(context, '/perfil');
+        break;
     }
   }
   @override
