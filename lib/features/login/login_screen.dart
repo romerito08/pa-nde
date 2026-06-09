@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_controller.dart';
-import '../../screens/inicio_screen.dart';
+//import '../../screens/inicio_screen.dart';
 import '../register/registro_screen.dart';
 import '../partner/partner_dashboard_screen.dart';
 import '../../screens/hotel_detail_screen.dart'; // ← agregado
