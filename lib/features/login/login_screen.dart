@@ -5,9 +5,11 @@ import 'login_controller.dart';
 import '../../screens/inicio_screen.dart';
 import '../register/registro_screen.dart';
 import '../partner/partner_dashboard_screen.dart';
+import '../../screens/hotel_detail_screen.dart'; // ← agregado
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? hotelId; // ← parámetro opcional
+  const LoginScreen({super.key, this.hotelId});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -41,16 +43,44 @@ class _LoginScreenState extends State<LoginScreen> {
               .doc(user.uid)
               .get();
           final role = doc.data()?['role'] ?? 'explorer';
-          if (role == 'partner') {
+
+          // Prioridad: si hay hotelId pendiente, ir al detalle
+          if (widget.hotelId != null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HotelDetailScreen(hotelId: widget.hotelId!),
+              ),
+            );
+          } else if (role == 'partner') {
             Navigator.pushReplacementNamed(context, '/partner-dashboard');
           } else {
             Navigator.pushReplacementNamed(context, '/inicio');
           }
         } catch (e) {
-          Navigator.pushReplacementNamed(context, '/inicio');
+          // Si hay error, también respetar hotelId si existe
+          if (widget.hotelId != null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HotelDetailScreen(hotelId: widget.hotelId!),
+              ),
+            );
+          } else {
+            Navigator.pushReplacementNamed(context, '/inicio');
+          }
         }
       } else {
-        Navigator.pushReplacementNamed(context, '/inicio');
+        if (widget.hotelId != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HotelDetailScreen(hotelId: widget.hotelId!),
+            ),
+          );
+        } else {
+          Navigator.pushReplacementNamed(context, '/inicio');
+        }
       }
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

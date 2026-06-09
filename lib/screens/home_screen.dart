@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../features/login/login_screen.dart';
-
-import '../../widgets/alojamiento_card.dart';
-import '../../widgets/experiencia_card.dart';
-import '../../widgets/destino_card.dart';
-import '../../widgets/footer.dart';
-import '../../widgets/carousel_section.dart';
-
-//import 'package:carousel_slider/carousel_slider.dart';
-import 'package:paonde_app/features/register/registro_screen.dart';
-//import 'hotel_detail_screen.dart';
+import '../widgets/alojamiento_card.dart';
+import '../widgets/experiencia_card.dart';
+import '../widgets/destino_card.dart';
+import '../widgets/footer.dart';
+import '../widgets/carousel_section.dart';
+import '../features/register/registro_screen.dart';
+import 'hotel_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,20 +18,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Variable de estado: true = Explorador activo, false = Anfitrión activo
   bool isExploradorActive = true;
+
+  void _onReservarPressed(String hotelId) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HotelDetailScreen(hotelId: hotelId),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(hotelId: hotelId),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const Color primaryYellow = Color(0xffE2E600);
     const Color cardBgColor = Color(0xff1C241B);
-
-    // Medidas de la pantalla para el diseño responsivo
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 768;
 
-    // Ajuste dinámico para que las tarjetas de abajo no crezcan hacia abajo en PC
-    double dynamicAspectRatio = 1.05;
+    // Ajuste de aspecto para dar más altura a las tarjetas
+    double dynamicAspectRatio = 1.15;
     if (!isMobile) {
       if (screenWidth > 1200) {
         dynamicAspectRatio = 1.6;
@@ -45,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xff1A1F16),
       body: CustomScrollView(
         slivers: [
-          // Encabezado responsivo
           SliverAppBar(
             expandedHeight: 220.0,
             floating: false,
@@ -53,65 +67,41 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: const Color(0xff1A1F16),
             actions: [
               SizedBox(
-                height: isMobile
-                    ? 32
-                    : 40, // Espacio a la derecha para que no quede pegado al borde
+                height: isMobile ? 32 : 40,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                    );
-                  },
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xffE2E600), width: 2),
+                    side: const BorderSide(color: primaryYellow, width: 2),
                     backgroundColor: const Color(0xff1A1F16),
-                    foregroundColor: const Color(0xffE2E600),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    foregroundColor: primaryYellow,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(
-                    'Iniciar Sesión',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isMobile ? 12 : 14,
-                    ),
-                  ),
+                  child: Text('Iniciar Sesión',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 12 : 14)),
                 ),
               ),
               const SizedBox(width: 8),
-
               SizedBox(
                 height: isMobile ? 32 : 40,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => RegistroScreen()),
-                    );
-                  },
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegistroScreen()),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffE2E600),
+                    backgroundColor: primaryYellow,
                     foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(
-                    'Registrarse',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isMobile ? 12 : 14,
-                    ),
-                  ),
+                  child: Text('Registrarse',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 12 : 14)),
                 ),
               ),
               const SizedBox(width: 8),
             ],
-
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -122,17 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 50),
-                        Image.asset(
-                          'assets/Logo.png',
-                          width: isMobile ? 180 : 250,
-                          fit: BoxFit.contain,
-                        ),
+                        Image.asset('assets/Logo.png', width: isMobile ? 180 : 250, fit: BoxFit.contain),
                         const SizedBox(height: 12),
-                        Image.asset(
-                          'assets/eslogandos.png',
-                          width: isMobile ? 150 : 200,
-                          fit: BoxFit.contain,
-                        ),
+                        Image.asset('assets/eslogandos.png', width: isMobile ? 150 : 200, fit: BoxFit.contain),
                       ],
                     ),
                   ),
@@ -140,35 +122,20 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
-          // Cuerpo de la página contenido y limitado en su ancho máximo
           SliverToBoxAdapter(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 1000,
-                ), // Marco controlado a 1000px
+                constraints: const BoxConstraints(maxWidth: 1000),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 32.0,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Center(
-                        child: Text(
-                          '¿Qué te ofrecemos?',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: Text('¿Qué te ofrecemos?',
+                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                       const SizedBox(height: 24),
-
-                      // Tarjetas Horizontales originales
                       _buildOfferCard(
                         icon: Icons.maps_home_work_outlined,
                         title: 'Alojamientos',
@@ -195,17 +162,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         cardBgColor: cardBgColor,
                         primaryYellow: primaryYellow,
                       ),
-
                       const SizedBox(height: 48),
                       const Center(
-                        child: Text(
-                          "Descubre tu lugar en pa'onde",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: Text("Descubre tu lugar en pa'onde",
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                       const SizedBox(height: 24),
                       Center(
@@ -217,77 +177,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // PESTAÑA: EXPLORADOR
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    isExploradorActive = true;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 7,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isExploradorActive
-                                        ? primaryYellow
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    'Explorador',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isExploradorActive
-                                          ? Colors.black87
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              // PESTAÑA: ANFITRIÓN
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    isExploradorActive = false;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 7,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: !isExploradorActive
-                                        ? primaryYellow
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    'Anfitrión',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: !isExploradorActive
-                                          ? Colors.black87
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              _buildTabButton(
+                                  'Explorador', isExploradorActive, () => setState(() => isExploradorActive = true),
+                                  primaryYellow),
+                              _buildTabButton(
+                                  'Anfitrión', !isExploradorActive, () => setState(() => isExploradorActive = false),
+                                  primaryYellow),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 32),
-
-                      // RENDERIZADO DINÁMICO SEGÚN MÓVIL O PC
                       if (isExploradorActive) ...[
                         if (isMobile) ...[
-                          // Diseño Vertical para telfs (Explorador)
                           _buildOfferCard2(
                             icon: Icons.explore_outlined,
                             title: 'Exploración Inteligente',
@@ -309,7 +211,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'Alojamiento, experiencias y traslados juntos. Organiza tu viaje completo sin salir de la plataforma.',
                           ),
                         ] else ...[
-                          // Diseño Horizontal (Grid) para Desktop / Tablet (Explorador)
                           GridView.count(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -340,9 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ] else ...[
-                        // Sección alternativa cuando Anfitrión está activo
                         if (isMobile) ...[
-                          // Diseño Vertical para Móviles (Anfitrión)
                           _buildOfferCard2(
                             icon: Icons.file_upload_outlined,
                             title: 'Publica tu Servicio',
@@ -364,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'Visualiza las númericas: reservas del mes, ingresos, calificación promedio y que servrvicios ganaron más interés',
                           ),
                         ] else ...[
-                          // Diseño Horizontal (Grid) para Desktop / Tablet (Anfitrión)
                           GridView.count(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -395,32 +293,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ],
-
                       const SizedBox(height: 48),
                       const Center(
-                        child: Text(
-                          'Tu próxima aventura comienza aquí',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: primaryYellow,
-                          ),
-                        ),
+                        child: Text('Tu próxima aventura comienza aquí',
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryYellow)),
                       ),
                       const SizedBox(height: 32),
                       const Center(
-                        child: Text(
-                          "¿Pa'onde quieres ir?",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: Text("¿Pa'onde quieres ir?",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                       const SizedBox(height: 16),
-
-                      // BARRA DE BÚSQUEDA Y BOTÓN AL LADO UNIFICADOS
                       Center(
                         child: Container(
                           constraints: const BoxConstraints(maxWidth: 600),
@@ -430,80 +313,41 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: SizedBox(
                                   height: 40,
                                   child: TextField(
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 14,
-                                    ),
+                                    style: const TextStyle(color: Colors.black, fontSize: 14),
                                     cursorColor: Colors.black,
                                     decoration: InputDecoration(
-                                      hintText:
-                                          'Escribe un destino, experiencia o servicio...',
+                                      hintText: 'Escribe un destino, experiencia o servicio...',
                                       hintStyle: const TextStyle(
-                                        color: Color.fromARGB(
-                                          179,
-                                          150,
-                                          150,
-                                          144,
-                                        ),
+                                        color: Color.fromARGB(179, 150, 150, 144),
                                         fontSize: 14,
                                       ),
-                                      prefixIcon: const Icon(
-                                        Icons.search,
-                                        color: Color.fromARGB(
-                                          179,
-                                          150,
-                                          150,
-                                          144,
-                                        ),
-                                        size: 20,
-                                      ),
+                                      prefixIcon: const Icon(Icons.search,
+                                          color: Color.fromARGB(179, 150, 150, 144), size: 20),
                                       filled: true,
                                       fillColor: Colors.white,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            vertical: 10,
-                                            horizontal: 16,
-                                          ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: Colors.white10,
-                                          width: 1,
-                                        ),
+                                        borderSide: const BorderSide(color: Colors.white10),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
+                                        borderSide: const BorderSide(color: Colors.black),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
-
-                              // BOTÓN TOTALMENTE CUADRADO (44x44)
                               ElevatedButton(
                                 onPressed: () {},
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
-                                  foregroundColor: const Color.fromARGB(
-                                    188,
-                                    111,
-                                    111,
-                                    111,
-                                  ),
+                                  foregroundColor: const Color.fromARGB(188, 111, 111, 111),
                                   elevation: 0,
                                   fixedSize: const Size(40, 40),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   padding: EdgeInsets.zero,
                                 ),
                                 child: const Icon(Icons.tune, size: 25),
@@ -513,51 +357,55 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 40),
-
                       CarouselSection(
                         title: "Descubre Venezuela",
                         height: 140,
                         viewportFraction: isMobile ? 0.6 : 0.23,
                         items: List.generate(6, (index) => DestinoCard()),
                       ),
-
                       const SizedBox(height: 40),
-
-                      const Text(
-                        "Servicios destacados",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: primaryYellow,
-                        ),
-                      ),
+                      const Text("Servicios destacados",
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryYellow)),
                       const SizedBox(height: 12),
-                      CarouselSection(
-                        title: "Alojamientos",
-                        isSubSection: true,
-                        height: 310,
-                        viewportFraction: isMobile ? 0.85 : 0.25,
-                        items: List.generate(
-                          6,
-                          (index) => AlojamientoCard(
-                            onReservar: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            ),
-                            onFavorito: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            ),
-                          ),
-                        ),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance.collection('hoteles').snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const SizedBox(
+                              height: 310,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          final hotels = snapshot.data!.docs;
+                          if (hotels.isEmpty) {
+                            return const SizedBox(
+                              height: 310,
+                              child: Center(child: Text('No hay hoteles disponibles', style: TextStyle(color: Colors.white70))),
+                            );
+                          }
+                          return CarouselSection(
+                            title: "Alojamientos",
+                            isSubSection: true,
+                            height: 310,
+                            viewportFraction: isMobile ? 0.85 : 0.25,
+                            items: hotels.map((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              return AlojamientoCard(
+                                hotelId: doc.id,
+                                nombre: data['nombre'] ?? 'Sin nombre',
+                                ubicacion: data['ubicacion'] ?? 'Sin ubicación',
+                                precio: (data['precioPorNoche'] ?? 0).toDouble(),
+                                imagenUrl: data['imagenUrl'] ?? '',
+                                onReservar: () => _onReservarPressed(doc.id),
+                                onFavorito: () => ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Función de favoritos próximamente')),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
-
                       const SizedBox(height: 40),
-
                       CarouselSection(
                         title: "Experiencias",
                         isSubSection: true,
@@ -566,84 +414,41 @@ class _HomeScreenState extends State<HomeScreen> {
                         items: List.generate(
                           6,
                           (index) => ExperienciaCard(
-                            onReservar: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
+                            onReservar: () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Próximamente')),
                             ),
-                            onFavorito: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            ),
+                            onFavorito: () {},
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-                      const Divider(
-                        color: primaryYellow,
-                        thickness: 1,
-                        indent: 0,
-                        endIndent: 0,
-                      ),
-                      // NUEVA SECCIÓN: Footer / Barra de navegación inferior
+                      const Divider(color: primaryYellow, thickness: 1),
                       Padding(
-                        // MODIFICACIÓN: Reducimos el padding inferior para pegarlo más al borde de la página
-                        padding: EdgeInsets.only(
-                          top: isMobile ? 4.0 : 8.0,
-                          bottom: isMobile
-                              ? 0.0
-                              : 4.0, // Menos espacio abajo si es móvil
-                        ),
+                        padding: EdgeInsets.only(top: isMobile ? 4.0 : 8.0, bottom: isMobile ? 0.0 : 4.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment
-                              .center, // Alinea verticalmente el logo y los textos
                           children: [
-                            Image.asset(
-                              'assets/logo.png',
-                              width: isMobile ? 80 : 150,
-                              fit: BoxFit.contain,
-                              // Alinea el logo a la izquierda dentro de su espacio
-                            ),
-
-                            // LADO DERECHO: Enlaces que se mantienen horizontales
+                            Image.asset('assets/logo.png', width: isMobile ? 80 : 150, fit: BoxFit.contain),
                             Flexible(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
-                                mainAxisSize: MainAxisSize
-                                    .min, // Ocupa solo el espacio necesario
                                 children: [
                                   Footer(
                                     title: 'Sobre Nosotros',
                                     isMobile: isMobile,
-                                    onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/sobre-nosotros',
-                                      );
-                                    },
+                                    onTap: () => Navigator.pushNamed(context, '/sobre-nosotros'),
                                   ),
-                                  SizedBox(
-                                    width: isMobile ? 6 : 20,
-                                  ), // Espaciado más ajustado en móvil
+                                  SizedBox(width: isMobile ? 6 : 20),
                                   Footer(
                                     title: 'Sé un Aliado',
                                     isMobile: isMobile,
-                                    onTap: () {
-                                      Navigator.pushNamed(context, '/partner-register');
-                                    },
+                                    onTap: () => Navigator.pushNamed(context, '/partner-register'),
                                   ),
                                   SizedBox(width: isMobile ? 6 : 20),
                                   Footer(
                                     title: 'Ayuda',
                                     isMobile: isMobile,
-                                    onTap: () {
-                                      Navigator.pushNamed(context, '/ayuda');
-                                    },
+                                    onTap: () => Navigator.pushNamed(context, '/ayuda'),
                                   ),
                                 ],
                               ),
@@ -662,6 +467,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildTabButton(String title, bool isActive, VoidCallback onTap, Color primaryYellow) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? primaryYellow : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(fontWeight: FontWeight.bold, color: isActive ? Colors.black87 : Colors.black),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOfferCard({
     required IconData icon,
     required String title,
@@ -671,12 +494,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
+      decoration: BoxDecoration(color: cardBgColor, borderRadius: BorderRadius.circular(10)),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 36, color: Colors.white70),
           const SizedBox(width: 16),
@@ -684,23 +503,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: primaryYellow,
-                  ),
-                ),
+                Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryYellow)),
                 const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                    height: 1.4,
-                  ),
-                ),
+                Text(description, style: const TextStyle(fontSize: 14, color: Colors.white70)),
               ],
             ),
           ),
@@ -709,13 +514,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Método corregido para evitar desbordamiento
   Widget _buildOfferCard2({
     required IconData icon,
     required String title,
     required String description,
   }) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xff1C241B),
@@ -739,11 +544,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             description,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Colors.white70,
               height: 1.3,
             ),
             textAlign: TextAlign.center,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
