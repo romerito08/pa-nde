@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../screens/hotel_detail_screen.dart';
+import 'edit_hotel_screen.dart';
 
 class PartnerHotelsScreen extends StatelessWidget {
   const PartnerHotelsScreen({super.key});
@@ -53,7 +54,7 @@ class PartnerHotelsScreen extends StatelessWidget {
               final hotelId = doc.id;
               final nombre = data['nombre'] ?? 'Sin nombre';
               final ubicacion = data['ubicacion'] ?? 'Sin ubicación';
-              final precio = data['precioPorNoche'] ?? 0;
+              final precio = data['precio'] ?? data['precioPorNoche'] ?? 0; 
               final imagenUrl = data['imagenUrl'] ?? '';
 
               return Card(
@@ -131,16 +132,17 @@ class PartnerHotelsScreen extends StatelessWidget {
                         Column(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit, color: Color(0xffE2E600)),
-                              onPressed: () {
-                                // Navegar a pantalla de edición (la crearemos luego)
-                                Navigator.pushNamed(
-                                  context,
-                                  '/edit-hotel',
-                                  arguments: hotelId,
-                                );
-                              },
-                            ),
+    icon: const Icon(Icons.edit, color: Color(0xffE2E600)),
+    onPressed: () {
+      // CORREGIDO: Inyección directa por constructor para evitar fallas de enrutamiento en PWA
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditHotelScreen(hotelId: hotelId),
+        ),
+      );
+    },
+  ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.redAccent),
                               onPressed: () => _deleteHotel(context, hotelId),

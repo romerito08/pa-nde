@@ -20,13 +20,20 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
   }
 
   Future<void> _loadPartnerData() async {
-    final user = FirebaseAuth.instance.currentUser;
+    // Patrón Singleton/Repository para obtener el usuario actual de forma segura
+    final user = FirebaseAuth.instance.currentUser; 
     if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists && mounted) {
-        setState(() {
-          _companyName = doc.data()?['companyName'] ?? 'Aliado';
-        });
+      try {
+        // CORREGIDO: Apunta a la colección unificada de la base de datos de producción
+        final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
+        if (doc.exists && mounted) {
+          setState(() {
+            // CORREGIDO: Mapea la llave 'nombre' que comparte con el registro de exploradores
+            _companyName = doc.data()?['nombre'] ?? 'Aliado';
+          });
+        }
+      } catch (e) {
+        debugPrint("Error cargando datos del aliado: \$e");
       }
     }
   }

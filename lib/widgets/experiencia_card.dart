@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 
-
 class ExperienciaCard extends StatelessWidget {
   final VoidCallback onReservar;
   final VoidCallback onFavorito;
+  final bool isFavorito; // Propiedad para controlar el estado visual
 
-  const ExperienciaCard(
-    {super.key,
+  const ExperienciaCard({
+    super.key,
     required this.onReservar,
     required this.onFavorito,
+    this.isFavorito = false, 
   });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Detectamos si la pantalla o el contenedor es muy pequeño (por ejemplo, menos de 340px)
         bool esPantallaPequena = constraints.maxWidth < 340;
 
         return Container(
-          // Si no tienes un ancho fijo externo, puedes usar el double.infinity o dejarlo libre
           width: 350,
           height: 150,
           margin: const EdgeInsets.only(right: 16),
@@ -29,9 +28,7 @@ class ExperienciaCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ZONA IZQUIERDA: Imagen (Se ajusta el ancho dinámicamente)
               Container(
-                // Si la pantalla es pequeña, la imagen mide 90px; si no, 110px
                 width: esPantallaPequena ? 90 : 110,
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -51,41 +48,25 @@ class ExperienciaCard extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // ZONA DERECHA: Detalles del Servicio
               Expanded(
                 child: Padding(
-                  // Reducimos un poco el padding si el espacio es interno
-                  padding: EdgeInsets.fromLTRB(
-                    4,
-                    12,
-                    esPantallaPequena ? 8 : 12,
-                    12,
-                  ),
+                  padding: EdgeInsets.fromLTRB(4, 12, esPantallaPequena ? 8 : 12, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Ubicación y Estrellas
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Row(
                               children: const [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14,
-                                  color: Colors.grey,
-                                ),
+                                Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
                                 SizedBox(width: 2),
                                 Expanded(
                                   child: Text(
                                     'Place',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
-                                    ),
+                                    style: TextStyle(color: Colors.grey, fontSize: 12),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -95,120 +76,79 @@ class ExperienciaCard extends StatelessWidget {
                           Row(
                             children: List.generate(
                               5,
-                              (index) => const Icon(
-                                Icons.star,
-                                size: 12,
-                                color: Colors.amber,
-                              ),
+                              (index) => const Icon(Icons.star, size: 12, color: Colors.amber),
                             ),
                           ),
                         ],
                       ),
-
-                      // Título
                       const Text(
                         'Título del servicio',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.black,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-
-                      // Descripción
                       const Text(
                         'Descripción del servicio que se esta presentando',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.black54,
-                          height: 1.2,
-                        ),
+                        style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.2),
                       ),
-
-                      // ACCIONES: Botón Reservar, Favorito e Importe (Optimizado para espacio)
                       Row(
                         children: [
-                          // El botón ahora se expande para usar el espacio disponible de forma segura
                           Expanded(
-                            flex: 3, // Le da prioridad de espacio al botón
+                            flex: 3,
                             child: SizedBox(
-                              height: 30,
-                              child: ElevatedButton(
-                                onPressed: onReservar,
-                                style: ElevatedButton.styleFrom(
+                              height: 36,
+                              child: TextButton(
+                                // ¡AQUÍ ESTÁ LA MAGIA! 
+                                // Al presionar este botón, se ejecuta la función que viene desde fuera.
+                                onPressed: onReservar, 
+                                style: TextButton.styleFrom(
                                   backgroundColor: const Color(0xff1A1F16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                  ), // Padding mínimo interno
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: EdgeInsets.zero, // Evita que los márgenes del botón rompan el diseño chico
                                 ),
-                                // El FittedBox hace que el texto se encoja proporcionalmente si no cabe
                                 child: const FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
                                     'Reservar',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
+                                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 8),
 
-                          // Icono de favorito
-                          Expanded(
-                            child: SizedBox(
-                              height: 30,
-                              width: 30,
-                              child: ElevatedButton(
-                                onPressed: onFavorito,
-
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(
-                                    255,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                  ),
+                          // BOTÓN FAVORITO
+                          GestureDetector(
+                            onTap: onFavorito,
+                            child: Container(
+                              height: 36,
+                              width: 36,
+                              decoration: BoxDecoration(
+                                color: isFavorito ? const Color(0xffFFD200) : Colors.white, 
+                                border: Border.all(
+                                  color: isFavorito ? const Color(0xffFFD200) : const Color(0xff182016), 
+                                  width: 1.5,
                                 ),
-                                child: const Icon(
-                                  Icons.favorite_border,
-                                  size: 16,
-                                  color: Colors.black87,
-                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                isFavorito ? Icons.favorite : Icons.favorite_border, 
+                                size: 18, 
+                                color: isFavorito ? Colors.white : const Color(0xff182016),
                               ),
                             ),
                           ),
-
-                          const SizedBox(width: 4),
-
-                          // Precio envuelto en Flexible para evitar desbordes
+                          const SizedBox(width: 8),
                           const Flexible(
                             flex: 2,
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
                                 '50\$/persona',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                  color: Colors.black87,
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87),
                               ),
                             ),
                           ),

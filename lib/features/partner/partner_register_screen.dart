@@ -53,18 +53,18 @@ class _PartnerRegisterScreenState extends State<PartnerRegisterScreen> {
 
       final user = userCredential.user;
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'companyName': _companyController.text.trim(),
-          'rif': _rifController.text.trim(),
-          'phone': _phoneController.text.trim(),
-          'email': _emailController.text.trim(),
-          'state': _stateController.text.trim(),
-          'municipio': _municipioController.text.trim(),
-          'address': _addressController.text.trim(),
-          'role': 'partner',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+  await _firestore.collection('usuarios').doc(user.uid).set({
+    'uid': user.uid,
+    'nombre': _companyController.text.trim(),   // De 'companyName' a 'nombre' (Estandarizado)
+    'rif': _rifController.text.trim().toUpperCase(),
+    'telefono': _phoneController.text.trim(),   // De 'phone' a 'telefono'
+    'correo': _emailController.text.trim(),     // De 'email' a 'correo'
+    'estado': _stateController.text.trim(),     // De 'state' a 'estado'
+    'municipio': _municipioController.text.trim(),
+    'direccion': _addressController.text.trim(), // De 'address' a 'direccion'
+    'role': 'partner',                          // Discriminador de rol requerido por el sistema
+    'createdAt': FieldValue.serverTimestamp(),
+  });
 
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/partner-dashboard');

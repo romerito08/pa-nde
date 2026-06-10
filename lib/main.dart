@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'features/login/login_screen.dart';
@@ -14,6 +15,12 @@ import 'features/partner/partner_hotels_screen.dart';
 import 'features/partner/create_hotel_screen.dart';
 import 'features/partner/edit_hotel_screen.dart';
 import 'screens/perfil_screen.dart'; 
+
+// 1. NUEVO: Importamos el cerebro de los favoritos
+import 'providers/favoritos_provider.dart'; 
+
+// 2. NUEVO: Instancia global accesible desde cualquier pantalla del proyecto
+final favoritosProvider = FavoritosProvider();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +40,15 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xff1A1F16),
       ),
       initialRoute: '/',
+      
+      // 3. NUEVO: Envolvemos con el builder global para escuchar los favoritos en toda la app
+      builder: (context, child) {
+        return ListenableBuilder(
+          listenable: favoritosProvider,
+          builder: (context, _) => child!,
+        );
+      },
+
       routes: {
         '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../main.dart'; // Importamos el favoritosProvider global
 import '../features/login/login_screen.dart';
 import '../widgets/alojamiento_card.dart';
 import '../widgets/experiencia_card.dart';
@@ -293,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ],
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 54),
                       const Center(
                         child: Text('Tu próxima aventura comienza aquí',
                             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryYellow)),
@@ -356,72 +357,87 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
                       CarouselSection(
                         title: "Descubre Venezuela",
-                        height: 140,
+                        height: 155,
                         viewportFraction: isMobile ? 0.6 : 0.23,
                         items: List.generate(6, (index) => DestinoCard()),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
                       const Text("Servicios destacados",
                           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryYellow)),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      
+                      // SECTION ALOJAMIENTOS CORREGIDA CON ESPACIADO LATERAL REAL
                       StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance.collection('hoteles').snapshots(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
                             return const SizedBox(
-                              height: 310,
+                              height: 275,
                               child: Center(child: CircularProgressIndicator()),
                             );
                           }
                           final hotels = snapshot.data!.docs;
                           if (hotels.isEmpty) {
                             return const SizedBox(
-                              height: 310,
+                              height: 275,
                               child: Center(child: Text('No hay hoteles disponibles', style: TextStyle(color: Colors.white70))),
                             );
                           }
                           return CarouselSection(
                             title: "Alojamientos",
                             isSubSection: true,
-                            height: 310,
-                            viewportFraction: isMobile ? 0.85 : 0.25,
+                            height: 275, 
+                            // AJUSTE: Bajamos levemente el fraction para liberar aire entre tarjetas
+                            viewportFraction: isMobile ? 0.80 : 0.23,
                             items: hotels.map((doc) {
                               final data = doc.data() as Map<String, dynamic>;
-                              return AlojamientoCard(
-                                hotelId: doc.id,
-                                nombre: data['nombre'] ?? 'Sin nombre',
-                                ubicacion: data['ubicacion'] ?? 'Sin ubicación',
-                                precio: (data['precioPorNoche'] ?? 0).toDouble(),
-                                imagenUrl: data['imagenUrl'] ?? '',
-                                onReservar: () => _onReservarPressed(doc.id),
-                                onFavorito: () => ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Función de favoritos próximamente')),
+                              final String hotelId = doc.id;
+
+                              // SOLUCIÓN DEFINITIVA: Separación manual inyectada al vuelo
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: AlojamientoCard(
+                                  hotelId: hotelId,
+                                  nombre: data['nombre'] ?? 'Sin nombre',
+                                  ubicacion: data['ubicacion'] ?? 'Sin ubicación',
+                                  precio: (data['precioPorNoche'] ?? 0).toDouble(),
+                                  imagenUrl: data['imagenUrl'] ?? '',
+                                  onReservar: () => _onReservarPressed(hotelId),
+                                  isFavorito: favoritosProvider.esAlojamientoFavorito(hotelId),
+                                  onFavorito: () => favoritosProvider.toggleAlojamiento(hotelId),
                                 ),
                               );
                             }).toList(),
                           );
                         },
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
+                      
+                      // SECTION EXPERIENCIAS REFORMADA
                       CarouselSection(
                         title: "Experiencias",
                         isSubSection: true,
-                        height: isMobile ? 120 : 150,
+                        height: isMobile ? 140 : 165,
                         viewportFraction: isMobile ? 0.65 : 0.35,
                         items: List.generate(
                           6,
-                          (index) => ExperienciaCard(
-                            onReservar: () => ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Próximamente')),
-                            ),
-                            onFavorito: () {},
-                          ),
+                          (index) {
+                            final String experienciaId = "experiencia_home_index_$index";
+
+                            return ExperienciaCard(
+                              onReservar: () => ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Próximamente')),
+                              ),
+                              isFavorito: favoritosProvider.esExperienciaFavorita(experienciaId),
+                              onFavorito: () => favoritosProvider.toggleExperiencia(experienciaId),
+                            );
+                          },
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 32),
                       const Divider(color: primaryYellow, thickness: 1),
                       Padding(
                         padding: EdgeInsets.only(top: isMobile ? 4.0 : 8.0, bottom: isMobile ? 0.0 : 4.0),
@@ -514,7 +530,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Método corregido para evitar desbordamiento
   Widget _buildOfferCard2({
     required IconData icon,
     required String title,
@@ -556,4 +571,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
+} 
