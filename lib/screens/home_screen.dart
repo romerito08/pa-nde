@@ -9,6 +9,7 @@ import '../widgets/footer.dart';
 import '../widgets/carousel_section.dart';
 import '../features/register/registro_screen.dart';
 import 'hotel_detail_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,56 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isExploradorActive = true;
+
+  final TextEditingController _searchController = TextEditingController();
+
+  List<DocumentSnapshot> _resultadosBusqueda = [];
+  bool _busquedaRealizada = false;
+  bool _estaBuscando = false;
+
+  Future<void> _ejecutarBusquedaSimple() async {
+    String termino = _searchController.text.toLowerCase().trim();
+
+    if (termino.isEmpty) {
+      setState(() {
+        _resultadosBusqueda = [];
+        _busquedaRealizada = false;
+        _estaBuscando = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _estaBuscando = true;
+      _busquedaRealizada = true;
+    });
+
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('hoteles')
+          .get();
+
+      final resultados = snapshot.docs.where((doc) {
+        final datos = doc.data() as Map<String, dynamic>;
+        
+    
+        final ubicacionHotel = (datos['ubicacion'] ?? '').toString().toLowerCase().replaceAll('"', '');
+        final nombreHotel = (datos['nombre'] ?? '').toString().toLowerCase().replaceAll('"', '');
+        
+        return ubicacionHotel.contains(termino) || nombreHotel.contains(termino);
+      }).toList();
+
+      setState(() {
+        _resultadosBusqueda = resultados;
+        _estaBuscando = false;
+      });
+    } catch (e) {
+      print("Error al realizar la búsqueda: $e");
+      setState(() {
+        _estaBuscando = false;
+      });
+    }
+  }
 
   void _onReservarPressed(String hotelId) {
     final user = FirebaseAuth.instance.currentUser;
@@ -313,6 +364,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: SizedBox(
                                   height: 40,
                                   child: TextField(
+                                    controller: _searchController,
+                                    onSubmitted: (_) => _ejecutarBusquedaSimple(),
                                     style: const TextStyle(color: Colors.black, fontSize: 14),
                                     cursorColor: Colors.black,
                                     decoration: InputDecoration(
@@ -376,11 +429,30 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Center(child: CircularProgressIndicator()),
                             );
                           }
-                          final hotels = snapshot.data!.docs;
+                          
+                          
+                          final hotels = _busquedaRealizada ? _resultadosBusqueda : snapshot.data!.docs;
+
+                          
+                            if (_estaBuscando) {
+                              return const SizedBox(
+                                height: 310,
+                                child: Center(child: CircularProgressIndicator(color: Colors.yellow)),
+                              );
+                            }
+
+                          
                           if (hotels.isEmpty) {
-                            return const SizedBox(
+                            return SizedBox(
                               height: 310,
-                              child: Center(child: Text('No hay hoteles disponibles', style: TextStyle(color: Colors.white70))),
+                              child: Center(
+                                child: Text(
+                                  _busquedaRealizada 
+                                    ? 'No se encontraron posadas en este destino.' 
+                                    : 'No hay hoteles disponibles.',
+                                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                                ),
+                              ),
                             );
                           }
                           return CarouselSection(
