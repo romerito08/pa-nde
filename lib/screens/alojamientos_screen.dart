@@ -14,6 +14,27 @@ class AlojamientosScreen extends StatefulWidget {
 }
 
 class _AlojamientosScreenState extends State<AlojamientosScreen> {
+  // Controlador de texto para capturar la búsqueda
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Escuchar cambios en la barra de búsqueda
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase().trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -24,12 +45,12 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      drawer: isMobile ? CustomDrawer(selectedIndex: 0) : null,
-      appBar: isMobile ? Header(selectedIndex: 1, isMobile: true) : null,
+      drawer: isMobile ? const CustomDrawer(selectedIndex: 0) : null,
+      appBar: isMobile ? const Header(selectedIndex: 1, isMobile: true) : null,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            if (!isMobile) Header(isMobile: false, selectedIndex: 1),
+            if (!isMobile) const Header(isMobile: false, selectedIndex: 1),
             Stack(
               alignment: Alignment.center,
               children: [
@@ -69,7 +90,8 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Barra de búsqueda (igual que antes)
+                      
+                      // Barra de búsqueda vinculada y reactiva
                       Center(
                         child: Container(
                           constraints: const BoxConstraints(maxWidth: 600),
@@ -77,12 +99,19 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
                             children: [
                               Expanded(
                                 child: TextField(
+                                  controller: _searchController,
                                   style: const TextStyle(color: Colors.black, fontSize: 14),
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                    hintText: 'Escribe un destino, experiencia o servicio...',
+                                    hintText: 'Escribe un destino o alojamiento...',
                                     hintStyle: const TextStyle(color: Color.fromARGB(179, 150, 150, 144), fontSize: 14),
                                     prefixIcon: const Icon(Icons.search, color: Color.fromARGB(179, 150, 150, 144), size: 20),
+                                    suffixIcon: _searchController.text.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear, color: Colors.black54, size: 18),
+                                            onPressed: () => _searchController.clear(),
+                                          )
+                                        : null,
                                     filled: true,
                                     fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -110,14 +139,15 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
                         ),
                       ),
                       const SizedBox(height: 40),
-                      // Grid de hoteles desde Firestore
+                      
+                      // Grid de hoteles reactivo con filtrado
                       StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance.collection('hoteles').snapshots(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
                             return const SizedBox(
                               height: 400,
-                              child: Center(child: CircularProgressIndicator()),
+                              child: Center(child: CircularProgressIndicator(color: primaryYellow)),
                             );
                           }
                           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -126,12 +156,34 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
                               child: Center(child: Text('No hay hoteles disponibles', style: TextStyle(color: Colors.white70))),
                             );
                           }
-                          final hotels = snapshot.data!.docs;
+
+                          // FILTRADO DINÁMICO: Evaluamos lo que llega de Firestore antes de construir el Grid
+                          final filteredHotels = snapshot.data!.docs.where((doc) {
+                            final data = doc.data() as Map<String, dynamic>;
+                            final nombre = (data['nombre'] ?? '').toString().toLowerCase();
+                            final ubicacion = (data['ubicacion'] ?? '').toString().toLowerCase();
+                            
+                            return nombre.contains(_searchQuery) || ubicacion.contains(_searchQuery);
+                          }).toList();
+
+                          if (filteredHotels.isEmpty) {
+                            return const SizedBox(
+                              height: 200,
+                              child: Center(
+                                child: Text(
+                                  '❌ No se encontraron alojamientos para tu búsqueda.',
+                                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                                ),
+                              ),
+                            );
+                          }
+
                           // Calcular columnas dinámicamente
                           int crossAxisCount = 4;
                           if (screenWidth < 600) crossAxisCount = 1;
                           else if (screenWidth < 900) crossAxisCount = 2;
                           else if (screenWidth < 1100) crossAxisCount = 3;
+
                           return GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -141,10 +193,12 @@ class _AlojamientosScreenState extends State<AlojamientosScreen> {
                               mainAxisSpacing: 20,
                               childAspectRatio: isMobile ? 0.85 : 0.78,
                             ),
-                            itemCount: hotels.length,
+                            itemCount: filteredHotels.length,
                             itemBuilder: (context, index) {
-                              final doc = hotels[index];
+                              final doc = filteredHotels[index];
                               final data = doc.data() as Map<String, dynamic>;
+
+                              // Inyectamos las propiedades de forma directa al widget sin crear variables muertas
                               return AlojamientoCard(
                                 hotelId: doc.id,
                                 nombre: data['nombre'] ?? 'Sin nombre',

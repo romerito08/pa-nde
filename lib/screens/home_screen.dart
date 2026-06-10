@@ -10,7 +10,6 @@ import '../widgets/footer.dart';
 import '../widgets/carousel_section.dart';
 import '../features/register/registro_screen.dart';
 import 'hotel_detail_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +26,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<DocumentSnapshot> _resultadosBusqueda = [];
   bool _busquedaRealizada = false;
   bool _estaBuscando = false;
+
+  // Lista de estados provisionales con imágenes de internet para alimentar el carrusel dinámico
+  final List<Map<String, String>> _estadosCarrusel = [
+    {'nombre': 'Falcón', 'foto': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Mérida', 'foto': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Bolívar', 'foto': 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Nueva Esparta', 'foto': 'https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Aragua', 'foto': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Amazonas', 'foto': 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?q=80&w=600&auto=format&fit=crop'},
+  ];
 
   Future<void> _ejecutarBusquedaSimple() async {
     String termino = _searchController.text.toLowerCase().trim();
@@ -53,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final resultados = snapshot.docs.where((doc) {
         final datos = doc.data() as Map<String, dynamic>;
         
-    
         final ubicacionHotel = (datos['ubicacion'] ?? '').toString().toLowerCase().replaceAll('"', '');
         final nombreHotel = (datos['nombre'] ?? '').toString().toLowerCase().replaceAll('"', '');
         
@@ -98,7 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 768;
 
-    // Ajuste de aspecto para dar más altura a las tarjetas
     double dynamicAspectRatio = 1.15;
     if (!isMobile) {
       if (screenWidth > 1200) {
@@ -387,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(color: Colors.black),
+                                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
                                       ),
                                     ),
                                   ),
@@ -411,11 +418,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 48),
+                      
+                      // SECCIÓN DE DESTINOS CORREGIDA ASIGNANDO DATOS DEL MAPA A CADA TARJETA
                       CarouselSection(
                         title: "Descubre Venezuela",
                         height: 155,
                         viewportFraction: isMobile ? 0.6 : 0.23,
-                        items: List.generate(6, (index) => DestinoCard()),
+                        items: List.generate(_estadosCarrusel.length, (index) {
+                          return DestinoCard(
+                            estado: _estadosCarrusel[index]['nombre']!,
+                            imagenUrl: _estadosCarrusel[index]['foto']!,
+                          );
+                        }),
                       ),
                       const SizedBox(height: 48),
                       const Text("Servicios destacados",
@@ -433,18 +447,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           }
                           
-                          
                           final hotels = _busquedaRealizada ? _resultadosBusqueda : snapshot.data!.docs;
 
-                          
-                            if (_estaBuscando) {
-                              return const SizedBox(
-                                height: 310,
-                                child: Center(child: CircularProgressIndicator(color: Colors.yellow)),
-                              );
-                            }
+                          if (_estaBuscando) {
+                            return const SizedBox(
+                              height: 310,
+                              child: Center(child: CircularProgressIndicator(color: Colors.yellow)),
+                            );
+                          }
 
-                          
                           if (hotels.isEmpty) {
                             return const SizedBox(
                               height: 310,
@@ -455,13 +466,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: "Alojamientos",
                             isSubSection: true,
                             height: 275, 
-                            // AJUSTE: Bajamos levemente el fraction para liberar aire entre tarjetas
                             viewportFraction: isMobile ? 0.80 : 0.23,
                             items: hotels.map((doc) {
                               final data = doc.data() as Map<String, dynamic>;
                               final String hotelId = doc.id;
 
-                              // SOLUCIÓN DEFINITIVA: Separación manual inyectada al vuelo
                               return Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: AlojamientoCard(
@@ -636,4 +645,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-} 
+}

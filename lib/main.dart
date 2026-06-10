@@ -9,17 +9,22 @@ import 'screens/inicio_screen.dart';
 import 'screens/experiencias_screens.dart';
 import 'screens/destinos_screen.dart';
 import 'screens/reservas_screen.dart';
+import 'screens/perfil_screen.dart'; // Perfil del Explorador / Usuario común
+
+// --- IMPORTACIONES DE PARTNER (ALIADOS) ---
 import 'features/partner/partner_register_screen.dart';
 import 'features/partner/partner_dashboard_screen.dart';
-import 'features/partner/partner_hotels_screen.dart';
+import 'features/partner/mis_servicios_aliado_screen.dart';
+import 'features/partner/partner_quotes_screen.dart';
+import 'features/partner/partner_reservations_screen.dart';
+import 'features/partner/partner_profile_screen.dart'; // NUEVA IMPORTACIÓN CORREGIDA
 import 'features/partner/create_hotel_screen.dart';
 import 'features/partner/edit_hotel_screen.dart';
-import 'screens/perfil_screen.dart'; 
 
-// 1. NUEVO: Importamos el cerebro de los favoritos
+// Importación del proveedor de favoritos
 import 'providers/favoritos_provider.dart'; 
 
-// 2. NUEVO: Instancia global accesible desde cualquier pantalla del proyecto
+// Instancia global accesible desde cualquier pantalla del proyecto
 final favoritosProvider = FavoritosProvider();
 
 void main() async {
@@ -41,7 +46,6 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       
-      // 3. NUEVO: Envolvemos con el builder global para escuchar los favoritos en toda la app
       builder: (context, child) {
         return ListenableBuilder(
           listenable: favoritosProvider,
@@ -50,6 +54,7 @@ class MyApp extends StatelessWidget {
       },
 
       routes: {
+        // --- RUTAS PÚBLICAS / EXPLORADOR ---
         '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/inicio': (context) => const InicioScreen(),
@@ -57,14 +62,21 @@ class MyApp extends StatelessWidget {
         '/experiencias': (context) => const ExperienciaScreen(),
         '/destino': (context) => const DestinoScreen(),
         '/reservas': (context) => const ReservaScreen(),
+        '/perfil': (context) => const PerfilScreen(), // Vista de perfil para el cliente final
+        
+        // --- RUTAS DE MANAGEMENT DE ALIADOS ---
         '/partner-register': (context) => const PartnerRegisterScreen(),
-        '/partner-dashboard': (context) => const PartnerDashboardScreen(),
-        '/partner-hotels': (context) => const PartnerHotelsScreen(),
+        '/partner-dashboard': (context) => const DashboardAliadoScreen(),
+        '/partner-quotes': (context) => const CotizacionesAliadoScreen(),
+        '/partner-reservations': (context) => const ReservasAliadoScreen(),
+        '/partner-services': (context) => const MisServiciosAliadoScreen(),
+        '/partner-profile': (context) => const PerfilAliadoScreen(), // NUEVA RUTA INTEGRADA PARA EL ALIADO
+        
+        // --- ACCIONES ESPECÍFICAS ---
         '/create-hotel': (context) => const CreateHotelScreen(),
-        '/perfil': (context) => const PerfilScreen(), 
       },
+      
       onGenerateRoute: (settings) {
-        // Ruta que recibe argumentos (hotelId)
         if (settings.name == '/edit-hotel') {
           final hotelId = settings.arguments as String;
           return MaterialPageRoute(

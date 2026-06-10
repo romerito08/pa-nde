@@ -17,6 +17,34 @@ class InicioScreen extends StatefulWidget {
 }
 
 class _InicioScreenState extends State<InicioScreen> {
+  // Lista COMPLETA de los 24 estados de Venezuela con imágenes reales de internet
+  final List<Map<String, String>> _estadosCarrusel = [
+    {'nombre': 'Amazonas', 'foto': 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Anzoátegui', 'foto': 'https://images.unsplash.com/photo-1597200381847-30ec200eeb9a?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Apure', 'foto': 'https://images.unsplash.com/photo-1610123598147-f632aa18b275?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Aragua', 'foto': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Barinas', 'foto': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Bolívar', 'foto': 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Carabobo', 'foto': 'https://images.unsplash.com/photo-1580137189272-c9379f8864fd?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Cojedes', 'foto': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Delta Amacuro', 'foto': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Distrito Capital', 'foto': 'https://images.unsplash.com/photo-1590439491754-080c55711670?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Falcón', 'foto': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Guárico', 'foto': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Lara', 'foto': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Mérida', 'foto': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Miranda', 'foto': 'https://images.unsplash.com/photo-1433832565846-527241675ba8?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Monagas', 'foto': 'https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Nueva Esparta', 'foto': 'https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Portuguesa', 'foto': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Sucre', 'foto': 'https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Táchira', 'foto': 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Trujillo', 'foto': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'La Guaira', 'foto': 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Yaracuy', 'foto': 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=600&auto=format&fit=crop'},
+    {'nombre': 'Zulia', 'foto': 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=600&auto=format&fit=crop'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -101,23 +129,30 @@ class _InicioScreenState extends State<InicioScreen> {
                         ),
                       ),
                       const SizedBox(height: 40),
+                      
+                      // Carrusel completo que leerá las 24 entidades federales
                       CarouselSection(
                         title: "Descubre Venezuela",
                         height: 140,
                         viewportFraction: isMobile ? 0.6 : 0.23,
-                        items: List.generate(6, (index) => DestinoCard()),
+                        items: List.generate(_estadosCarrusel.length, (index) {
+                          return DestinoCard(
+                            estado: _estadosCarrusel[index]['nombre']!,
+                            imagenUrl: _estadosCarrusel[index]['foto']!,
+                          );
+                        }),
                       ),
                       const SizedBox(height: 40),
                       const Text("Servicios destacados", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryYellow)),
                       const SizedBox(height: 12),
-                      // Carrusel de alojamientos desde Firestore
+                      
                       StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance.collection('hoteles').snapshots(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
-                            return SizedBox(
+                            return const SizedBox(
                               height: 310,
-                              child: const Center(child: CircularProgressIndicator()),
+                              child: Center(child: CircularProgressIndicator()),
                             );
                           }
                           final hotels = snapshot.data!.docs;
@@ -166,7 +201,7 @@ class _InicioScreenState extends State<InicioScreen> {
                       const SizedBox(height: 40),
                       const Text("Aprovecha las ofertas", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryYellow)),
                       const SizedBox(height: 12),
-                      // Segundo carrusel de ofertas (también hoteles reales)
+                      
                       StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance.collection('hoteles').snapshots(),
                         builder: (context, snapshot) {

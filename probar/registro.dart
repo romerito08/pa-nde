@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  // CORRECCIÓN AQUÍ: Uso de super parámetros modernos
+  const RegisterScreen({super.key});
 
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -28,19 +29,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       // Llamada al método de Firebase para crear usuario
-      UserCredential userCredential = await FirebaseAuth.instance
+      await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
 
-      // Si el registro es exitoso
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Usuario registrado con éxito!')),
-      );
-
-      // Aquí puedes redirigir a la pantalla de inicio (Home)
-      // Navigator.pushReplacementNamed(context, '/home');
+      if (mounted) {
+        // Si el registro es exitoso
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Usuario registrado con éxito!')),
+        );
+        // Aquí puedes redirigir a la pantalla de inicio (Home) si lo requieres:
+        // Navigator.pushReplacementNamed(context, '/home');
+      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Ocurrió un error inesperado.';
 
@@ -56,9 +58,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       _showErrorDialog(e.toString());
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -147,9 +151,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       : ElevatedButton(
                           onPressed: _registerUser,
                           style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(
-                              50,
-                            ), // Botón ancho
+                            minimumSize: const Size.fromHeight(50), // Botón ancho
                           ),
                           child: const Text(
                             'Registrarse',
