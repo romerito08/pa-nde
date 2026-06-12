@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"paonde-app","appId":"1:76673791229:android:44b14a22b5fe978134fa94","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"paonde-app","configurations":{"android":"1:76673791229:android:44b14a22b5fe978134fa94","ios":"1:76673791229:ios:bd4ceb9da1f4bfd234fa94","macos":"1:76673791229:ios:bd4ceb9da1f4bfd234fa94","web":"1:76673791229:web:44342bd915d3b49a34fa94","windows":"1:76673791229:web:7b1d19ac7c177b6334fa94"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "paonde-app",
+          "appId": "1:76673791229:android:44b14a22b5fe978134fa94",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "paonde-app",
+          "configurations": {
+            "android": "1:76673791229:android:44b14a22b5fe978134fa94",
+            "ios": "1:76673791229:ios:bd4ceb9da1f4bfd234fa94",
+            "macos": "1:76673791229:ios:bd4ceb9da1f4bfd234fa94",
+            "web": "1:76673791229:web:44342bd915d3b49a34fa94",
+            "windows": "1:76673791229:web:7b1d19ac7c177b6334fa94"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
