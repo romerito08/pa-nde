@@ -12,10 +12,9 @@ import '../../../models/reserva.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../../bookings/data/booking_repository.dart';
 
-/// Gestión de reservas recibidas por el Aliado (RF08): lista en tiempo real
-/// las solicitudes sobre sus servicios y ejecuta las transiciones del flujo
-/// de estados — aceptar (Solicitado → Aceptado) y marcar como Disfrutado
-/// cuando la estadía pagada concluye.
+/// Gestión de reservas recibidas por el Aliado: con el flujo de reserva
+/// directa ya no hay aprobación previa — el Aliado monitorea los pagos
+/// pendientes y marca como "Disfrutado" las estadías pagadas que concluyen.
 class PartnerReservasScreen extends StatefulWidget {
   const PartnerReservasScreen({super.key});
 
@@ -76,7 +75,7 @@ class _PartnerReservasScreenState extends State<PartnerReservasScreen> {
                                   Theme.of(context).textTheme.headlineLarge),
                           const SizedBox(height: 8),
                           const Text(
-                            'Acepta las solicitudes para que el explorador pueda pagar, y marca como "Disfrutado" las estadías concluidas.',
+                            'Las reservas se confirman automáticamente al validar el calendario. Marca como "Disfrutado" las estadías pagadas que concluyan.',
                             style: TextStyle(color: AppColors.verdeClaro),
                           ),
                           const SizedBox(height: 24),
@@ -231,18 +230,12 @@ class _PartnerReservasScreenState extends State<PartnerReservasScreen> {
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator())
-                      else if (reserva.estado == EstadosReserva.solicitado)
-                        ElevatedButton.icon(
-                          onPressed: () => _cambiarEstado(
-                              reserva, EstadosReserva.aceptado),
-                          icon: const Icon(Icons.check, size: 16),
-                          label: const Text('Aceptar solicitud'),
-                        )
-                      else if (reserva.estado == EstadosReserva.aceptado)
+                      else if (reserva.estado == EstadosReserva.pendientePago)
                         const Text(
-                          'Esperando el pago del explorador…',
+                          'Reserva directa confirmada. Esperando el pago…',
                           style: TextStyle(
-                              color: AppColors.estadoAceptado, fontSize: 13),
+                              color: AppColors.estadoPendientePago,
+                              fontSize: 13),
                         )
                       else if (reserva.estado == EstadosReserva.pagado)
                         OutlinedButton.icon(

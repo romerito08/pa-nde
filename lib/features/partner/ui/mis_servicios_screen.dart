@@ -141,14 +141,17 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Optimiza tu alcance y conecta con la comunidad Pa\'onde',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.blanco,
-              fontSize: esMovil ? 20 : 32,
-              fontWeight: FontWeight.w700,
-              shadows: const [Shadow(blurRadius: 10, color: Colors.black87)],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Optimiza tu alcance y conecta\ncon la comunidad Pa\'onde',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.blanco,
+                fontSize: esMovil ? 20 : 32,
+                fontWeight: FontWeight.w700,
+                shadows: const [Shadow(blurRadius: 10, color: Colors.black87)],
+              ),
             ),
           ),
         ),
@@ -300,7 +303,7 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          servicio.ciudad,
+                          servicio.ubicacion,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

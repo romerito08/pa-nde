@@ -68,11 +68,14 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Registra una cuenta nueva con su rol y deja la sesión iniciada.
+  /// Para Exploradores, el repositorio bloquea el envío a Firebase Auth si
+  /// el correo no es institucional UNIMET (validación RegEx de servidor).
   Future<bool> registrar({
     required String correo,
     required String contrasena,
     required String nombre,
     required String apellido,
+    required String telefono,
     required String estado,
     required String municipio,
     required String rol,
@@ -84,9 +87,45 @@ class AuthController extends ChangeNotifier {
         contrasena: contrasena,
         nombre: nombre.trim(),
         apellido: apellido.trim(),
-        estado: estado.trim(),
-        municipio: municipio.trim(),
+        telefono: telefono.trim(),
+        estado: estado,
+        municipio: municipio,
         rol: rol,
+      );
+      _finalizarCarga();
+      return true;
+    } on AppException catch (e) {
+      _error = e.mensaje;
+      _finalizarCarga();
+      return false;
+    }
+  }
+
+  /// Modificación de perfil (Explorador y Aliado): persiste en `usuarios`
+  /// vía repositorio y refresca el estado global para toda la UI.
+  Future<bool> actualizarPerfil({
+    required String nombre,
+    required String apellido,
+    required String telefono,
+    required String estado,
+    required String municipio,
+  }) async {
+    final actual = _usuario;
+    if (actual == null) {
+      _error = 'Inicia sesión para editar tu perfil.';
+      notifyListeners();
+      return false;
+    }
+    _iniciarCarga();
+    try {
+      _usuario = await _repository.actualizarPerfil(
+        actual.copyWith(
+          nombre: nombre,
+          apellido: apellido,
+          telefono: telefono,
+          estado: estado,
+          municipio: municipio,
+        ),
       );
       _finalizarCarga();
       return true;
@@ -114,7 +153,7 @@ class AuthController extends ChangeNotifier {
   String get rutaSegunRol {
     if (esAdministrador) return '/admin';
     if (esAliado) return '/aliado';
-    return '/';
+    return '/explorar';
   }
 
   void _iniciarCarga() {

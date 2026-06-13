@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../features/admin/ui/admin_dashboard_screen.dart';
 import '../../features/auth/ui/login_screen.dart';
+import '../../features/auth/ui/registro_aliado_screen.dart';
 import '../../features/auth/ui/registro_screen.dart';
 import '../../features/bookings/ui/checkout_screen.dart';
 import '../../features/bookings/ui/mis_reservas_screen.dart';
 import '../../features/catalog/ui/detalle_servicio_screen.dart';
 import '../../features/catalog/ui/explorar_screen.dart';
+import '../../features/landing/ui/landing_screen.dart';
 import '../../features/partner/ui/mis_servicios_screen.dart';
 import '../../features/partner/ui/partner_dashboard_screen.dart';
 import '../../features/partner/ui/partner_reservas_screen.dart';
 import '../../features/partner/ui/publicar_servicio_screen.dart';
+import '../../features/profile/ui/perfil_screen.dart';
+import '../../features/quotes/ui/aliado_cotizaciones_screen.dart';
 import '../../models/reserva.dart';
 import '../../models/servicio.dart';
 
@@ -19,15 +23,19 @@ import '../../models/servicio.dart';
 class AppRoutes {
   AppRoutes._();
 
-  static const String explorar = '/';
+  static const String landing = '/';
+  static const String explorar = '/explorar';
   static const String login = '/login';
   static const String registro = '/registro';
+  static const String seAliado = '/se-aliado';
+  static const String perfil = '/perfil';
   static const String detalleServicio = '/servicio';
   static const String misReservas = '/mis-reservas';
   static const String checkout = '/checkout';
   static const String aliadoDashboard = '/aliado';
   static const String aliadoServicios = '/aliado/servicios';
   static const String aliadoPublicar = '/aliado/publicar';
+  static const String aliadoCotizaciones = '/aliado/cotizaciones';
   static const String aliadoReservas = '/aliado/reservas';
   static const String adminDashboard = '/admin';
 
@@ -35,18 +43,26 @@ class AppRoutes {
   /// (detalle de servicio, checkout y edición de servicio).
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case landing:
+        return _ruta(const LandingScreen(), settings);
       case explorar:
         return _ruta(const ExplorarScreen(), settings);
       case login:
         return _ruta(const LoginScreen(), settings);
       case registro:
         return _ruta(const RegistroScreen(), settings);
+      case seAliado:
+        return _ruta(const RegistroAliadoScreen(), settings);
+      case perfil:
+        return _ruta(const PerfilScreen(), settings);
       case misReservas:
         return _ruta(const MisReservasScreen(), settings);
       case aliadoDashboard:
         return _ruta(const PartnerDashboardScreen(), settings);
       case aliadoServicios:
         return _ruta(const MisServiciosScreen(), settings);
+      case aliadoCotizaciones:
+        return _ruta(const AliadoCotizacionesScreen(), settings);
       case aliadoReservas:
         return _ruta(const PartnerReservasScreen(), settings);
       case adminDashboard:
@@ -101,7 +117,7 @@ class AppRoutes {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.of(context)
-                    .pushNamedAndRemoveUntil(explorar, (route) => false),
+                    .pushNamedAndRemoveUntil(landing, (route) => false),
                 child: const Text('Volver al inicio'),
               ),
             ],

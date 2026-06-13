@@ -22,7 +22,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   /// Enlaces de navegación según el rol del usuario.
   static List<({String titulo, String ruta})> enlacesPara(Usuario? usuario) {
     final enlaces = <({String titulo, String ruta})>[
-      (titulo: 'Explorar', ruta: '/'),
+      (titulo: 'Inicio', ruta: '/'),
+      (titulo: 'Explorar', ruta: '/explorar'),
     ];
     if (usuario == null || usuario.rol == RolesUsuario.explorador) {
       enlaces.add((titulo: 'Mis Reservas', ruta: '/mis-reservas'));
@@ -31,11 +32,15 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       enlaces.addAll([
         (titulo: 'Dashboard', ruta: '/aliado'),
         (titulo: 'Mis Servicios', ruta: '/aliado/servicios'),
+        (titulo: 'Cotizaciones', ruta: '/aliado/cotizaciones'),
         (titulo: 'Reservas', ruta: '/aliado/reservas'),
       ]);
     }
     if (usuario?.esAdministrador ?? false) {
       enlaces.add((titulo: 'Panel Admin', ruta: '/admin'));
+    }
+    if (usuario != null) {
+      enlaces.add((titulo: 'Mi Perfil', ruta: '/perfil'));
     }
     return enlaces;
   }
@@ -107,6 +112,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       color: AppColors.verde,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (accion) async {
+        if (accion == 'perfil') {
+          Navigator.of(context).pushNamed('/perfil');
+          return;
+        }
         if (accion == 'salir') {
           final cerrada = await auth.cerrarSesion();
           if (!context.mounted) return;
@@ -124,6 +133,17 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           child: Text(
             '${auth.usuario?.nombreCompleto ?? ''}\n${auth.usuario?.rol ?? ''}',
             style: const TextStyle(color: AppColors.verdeClaro, fontSize: 13),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'perfil',
+          child: Row(
+            children: [
+              Icon(Icons.manage_accounts_outlined,
+                  color: AppColors.blanco, size: 18),
+              SizedBox(width: 8),
+              Text('Editar perfil', style: TextStyle(color: AppColors.blanco)),
+            ],
           ),
         ),
         const PopupMenuItem(

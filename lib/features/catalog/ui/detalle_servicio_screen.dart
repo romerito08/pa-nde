@@ -11,6 +11,8 @@ import '../../../models/servicio.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../../bookings/logic/booking_controller.dart';
 import '../../bookings/ui/widgets/calendario_disponibilidad.dart';
+import '../../quotes/logic/quotes_controller.dart';
+import '../../quotes/ui/widgets/solicitar_cotizacion_dialog.dart';
 import '../../reviews/logic/review_controller.dart';
 import '../../reviews/ui/review_section.dart';
 import '../data/catalog_repository.dart';
@@ -269,10 +271,13 @@ class _Contenido extends StatelessWidget {
             const Icon(Icons.location_on_outlined,
                 size: 16, color: AppColors.verdeClaro),
             const SizedBox(width: 4),
-            Text(
-              '${servicio.ciudad}${servicio.direccion.isEmpty ? '' : ' — ${servicio.direccion}'}',
-              style:
-                  const TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+            Flexible(
+              child: Text(
+                '${servicio.ubicacion}${servicio.direccion.isEmpty ? '' : ' — ${servicio.direccion}'}',
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+              ),
             ),
             const SizedBox(width: 16),
             Container(
@@ -425,53 +430,81 @@ class _Contenido extends StatelessWidget {
           const SizedBox(height: 16),
           reserva.procesando
               ? const Center(child: CircularProgressIndicator())
-              : ElevatedButton(
-                  onPressed: () async {
-                    final auth = context.read<AuthController>();
-                    if (!auth.autenticado) {
-                      FeedbackHelper.mostrarAdvertencia(
-                          context, 'Inicia sesión para reservar.');
-                      Navigator.of(context).pushNamed('/login');
-                      return;
-                    }
-                    final mensajeError = await context
-                        .read<BookingController>()
-                        .solicitarReserva(auth.usuario);
-                    if (!context.mounted) return;
-                    if (mensajeError == null) {
-                      await showDialog<void>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('¡Solicitud enviada!'),
-                          content: const Text(
-                            'Tu reserva quedó en estado "Solicitado". Cuando '
-                            'el aliado la acepte podrás pagarla desde la '
-                            'sección Mis Reservas.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Seguir explorando'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                Navigator.of(context)
-                                    .pushNamed('/mis-reservas');
-                              },
-                              child: const Text('Ver mis reservas'),
-                            ),
-                          ],
-                        ),
-                      );
-                    } else {
-                      FeedbackHelper.mostrarError(context, mensajeError);
-                    }
-                  },
-                  child: const Text('Solicitar Reserva'),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Reserva directa: valida disponibilidad en `calendarios`
+                    // y abre la pasarela de pago de inmediato.
+                    ElevatedButton.icon(
+                      onPressed: () => _reservarDirecto(context),
+                      icon: const Icon(Icons.bolt_outlined, size: 18),
+                      label: const Text('Reservar'),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () => _solicitarCotizacion(context),
+                      icon: const Icon(Icons.request_quote_outlined, size: 18),
+                      label: const Text('Solicitar una Cotización'),
+                    ),
+                  ],
                 ),
         ],
       ),
     );
+  }
+
+  /// Flujo de reserva directa: si `calendarios` confirma disponibilidad, la
+  /// reserva se crea automáticamente en "Pendiente de Pago" y la interfaz de
+  /// la pasarela aparece inmediatamente después del clic en "Reservar".
+  Future<void> _reservarDirecto(BuildContext context) async {
+    final auth = context.read<AuthController>();
+    if (!auth.autenticado) {
+      FeedbackHelper.mostrarAdvertencia(context, 'Inicia sesión para reservar.');
+      Navigator.of(context).pushNamed('/login');
+      return;
+    }
+    final (reservaCreada, mensajeError) =
+        await context.read<BookingController>().reservarDirecto(auth.usuario);
+    if (!context.mounted) return;
+    if (reservaCreada != null) {
+      FeedbackHelper.mostrarExito(
+          context, 'Fechas confirmadas. Completa el pago para asegurarlas.');
+      // Disparador de pago inmediato: checkout con la reserva recién creada.
+      Navigator.of(context).pushNamed('/checkout', arguments: reservaCreada);
+    } else {
+      FeedbackHelper.mostrarError(
+          context, mensajeError ?? 'No fue posible procesar la reserva.');
+    }
+  }
+
+  /// Alternativa a la reserva directa: crea una solicitud en la colección
+  /// `cotizaciones` para que el Aliado responda con su feedback.
+  Future<void> _solicitarCotizacion(BuildContext context) async {
+    final auth = context.read<AuthController>();
+    if (!auth.autenticado) {
+      FeedbackHelper.mostrarAdvertencia(
+          context, 'Inicia sesión para solicitar una cotización.');
+      Navigator.of(context).pushNamed('/login');
+      return;
+    }
+    final reserva = context.read<BookingController>();
+    final quotes = context.read<QuotesController>();
+    final enviada = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: quotes,
+        child: SolicitarCotizacionDialog(
+          servicio: servicio,
+          fechaInicio: reserva.fechaInicio,
+          fechaFin: reserva.fechaFin,
+          huespedes: reserva.huespedes,
+        ),
+      ),
+    );
+    if (enviada == true && context.mounted) {
+      FeedbackHelper.mostrarExito(
+          context,
+          'Solicitud enviada. El aliado te responderá en "Mis Reservas → Cotizaciones".');
+    }
   }
 }

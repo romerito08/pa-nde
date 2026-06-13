@@ -7,19 +7,37 @@ import '../../../models/servicio.dart';
 /// Registro de una búsqueda hecha por los exploradores (colección
 /// `busquedas`), usado para las tendencias del panel del Administrador.
 class RegistroBusqueda {
-  final String? ciudad;
+  final String? estado;
+  final String? municipio;
   final double? presupuestoMaximo;
   final DateTime creadoEn;
 
+  final String? _ciudadAntigua;
+
   const RegistroBusqueda({
-    required this.ciudad,
+    required this.estado,
+    required this.municipio,
     required this.presupuestoMaximo,
     required this.creadoEn,
-  });
+    String? ciudadAntigua,
+  }) : _ciudadAntigua = ciudadAntigua;
+
+  /// Destino legible para agrupar tendencias: municipio si existe, luego
+  /// estado; los documentos antiguos con 'ciudad' libre también se leen.
+  String? get destino {
+    final municipioOCiudad = municipio ?? _ciudadAntigua;
+    if (municipioOCiudad != null && municipioOCiudad.trim().isNotEmpty) {
+      return municipioOCiudad.trim();
+    }
+    if (estado != null && estado!.trim().isNotEmpty) return estado!.trim();
+    return null;
+  }
 
   factory RegistroBusqueda.fromFirestore(Map<String, dynamic> data) {
     return RegistroBusqueda(
-      ciudad: data['ciudad'] as String?,
+      estado: data['estado'] as String?,
+      municipio: data['municipio'] as String?,
+      ciudadAntigua: data['ciudad'] as String?,
       presupuestoMaximo: (data['presupuestoMaximo'] as num?)?.toDouble(),
       creadoEn:
           (data['creadoEn'] as Timestamp? ?? Timestamp.now()).toDate(),

@@ -2,24 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../models/cotizacion.dart';
 import '../../../models/reserva.dart';
 import '../../../models/servicio.dart';
 import '../../bookings/data/booking_repository.dart';
+import '../../quotes/data/quote_repository.dart';
 import '../data/servicio_repository.dart';
 
 /// Controlador del Dashboard del Aliado (RF07): combina los streams de sus
-/// servicios y de las reservas recibidas para calcular métricas reales:
-/// ganancias (solo estados "Pagado" o "Disfrutado"), montos por cobrar,
-/// solicitudes pendientes, satisfacción promedio e ingresos de la semana.
+/// servicios, reservas y cotizaciones para calcular métricas reales:
+/// ganancias (solo estados "Pagado" o "Disfrutado"), pagos pendientes,
+/// cotizaciones por responder, satisfacción promedio e ingresos semanales.
 class PartnerDashboardController extends ChangeNotifier {
   final ServicioRepository _servicioRepository;
   final BookingRepository _bookingRepository;
+  final QuoteRepository _quoteRepository;
 
   StreamSubscription<List<Servicio>>? _suscripcionServicios;
   StreamSubscription<List<Reserva>>? _suscripcionReservas;
+  StreamSubscription<List<Cotizacion>>? _suscripcionCotizaciones;
 
   List<Servicio> _servicios = [];
   List<Reserva> _reservas = [];
+  List<Cotizacion> _cotizaciones = [];
   bool _cargandoServicios = true;
   bool _cargandoReservas = true;
   String? _error;
@@ -28,8 +33,23 @@ class PartnerDashboardController extends ChangeNotifier {
     required String aliadoId,
     ServicioRepository? servicioRepository,
     BookingRepository? bookingRepository,
+    QuoteRepository? quoteRepository,
   })  : _servicioRepository = servicioRepository ?? ServicioRepository(),
-        _bookingRepository = bookingRepository ?? BookingRepository() {
+        _bookingRepository = bookingRepository ?? BookingRepository(),
+        _quoteRepository = quoteRepository ?? QuoteRepository() {
+    _suscripcionCotizaciones =
+        _quoteRepository.cotizacionesDeAliado(aliadoId).listen(
+      (cotizaciones) {
+        _cotizaciones = cotizaciones;
+        notifyListeners();
+      },
+      onError: (_) {
+        // La bandeja de cotizaciones es secundaria en el dashboard: un fallo
+        // aquí no bloquea las métricas principales.
+        _cotizaciones = [];
+        notifyListeners();
+      },
+    );
     _suscripcionServicios = _servicioRepository.serviciosDe(aliadoId).listen(
       (servicios) {
         _servicios = servicios;
@@ -71,17 +91,18 @@ class PartnerDashboardController extends ChangeNotifier {
           r.estado == EstadosReserva.disfrutado)
       .fold<double>(0, (acumulado, r) => acumulado + r.total);
 
-  /// Monto aceptado pero aún no pagado por los exploradores.
+  /// Monto de reservas confirmadas que los exploradores aún no pagan.
   double get porCobrar => _reservas
-      .where((r) => r.estado == EstadosReserva.aceptado)
+      .where((r) => r.estado == EstadosReserva.pendientePago)
       .fold<double>(0, (acumulado, r) => acumulado + r.total);
 
-  int get solicitudesNuevas =>
-      _reservas.where((r) => r.estado == EstadosReserva.solicitado).length;
+  /// Cotizaciones pendientes de respuesta en la bandeja de entrada.
+  int get cotizacionesPendientes => _cotizaciones
+      .where((c) => c.estado == EstadosCotizacion.pendiente)
+      .length;
 
   int get reservasConfirmadas => _reservas
       .where((r) =>
-          r.estado == EstadosReserva.aceptado ||
           r.estado == EstadosReserva.pagado ||
           r.estado == EstadosReserva.disfrutado)
       .length;
@@ -132,6 +153,7 @@ class PartnerDashboardController extends ChangeNotifier {
   void dispose() {
     _suscripcionServicios?.cancel();
     _suscripcionReservas?.cancel();
+    _suscripcionCotizaciones?.cancel();
     super.dispose();
   }
 }

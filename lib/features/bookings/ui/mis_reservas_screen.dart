@@ -7,14 +7,17 @@ import '../../../core/utils/feedback_helper.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../models/cotizacion.dart';
 import '../../../models/reserva.dart';
 import '../../auth/logic/auth_controller.dart';
+import '../../quotes/logic/quotes_controller.dart';
 import '../logic/mis_reservas_controller.dart';
 
-/// "Mis Reservas" del Explorador (RF05/RF08): muestra cada reserva con su
-/// línea de progreso de estados (Solicitado → Aceptado → Pagado →
-/// Disfrutado), permite cancelar solicitudes pendientes y abre la pasarela
-/// de pago cuando el aliado acepta.
+/// "Mis Reservas" del Explorador, con dos pestañas:
+/// - Reservas: línea de progreso Pendiente de Pago → Pagado → Disfrutado,
+///   con pago inmediato y cancelación (libera fechas) mientras no se pague.
+/// - Cotizaciones: solicitudes enviadas y el feedback del Aliado
+///   (aceptada, rechazada o contrapropuesta con precio sugerido).
 class MisReservasScreen extends StatelessWidget {
   const MisReservasScreen({super.key});
 
@@ -51,7 +54,7 @@ class MisReservasScreen extends StatelessWidget {
                           if (!auth.autenticado)
                             _sinSesion(context)
                           else
-                            _listado(context, auth.usuario!.uid, esMovil),
+                            _pestanas(context, auth.usuario!.uid, esMovil),
                           const SizedBox(height: 40),
                           AppFooter(esMovil: esMovil),
                         ],
@@ -92,38 +95,70 @@ class MisReservasScreen extends StatelessWidget {
     );
   }
 
-  Widget _listado(BuildContext context, String usuarioId, bool esMovil) {
+  Widget _pestanas(BuildContext context, String usuarioId, bool esMovil) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.verde,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const TabBar(
+              indicatorColor: AppColors.amarillo,
+              labelColor: AppColors.amarillo,
+              unselectedLabelColor: AppColors.verdeClaro,
+              dividerColor: Colors.transparent,
+              tabs: [
+                Tab(
+                    icon: Icon(Icons.book_online_outlined, size: 18),
+                    text: 'Reservas'),
+                Tab(
+                    icon: Icon(Icons.request_quote_outlined, size: 18),
+                    text: 'Cotizaciones'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Altura propia por pestaña dentro del scroll de la página.
+          SizedBox(
+            height: 600,
+            child: TabBarView(
+              children: [
+                _listadoReservas(context, usuarioId, esMovil),
+                _listadoCotizaciones(context, usuarioId),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _listadoReservas(
+      BuildContext context, String usuarioId, bool esMovil) {
     final controlador = context.watch<MisReservasController>();
 
     return StreamBuilder<List<Reserva>>(
       stream: controlador.reservasDe(usuarioId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 240,
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return const SizedBox(
-            height: 200,
-            child: Center(
-              child: Text(
-                'No pudimos cargar tus reservas. Verifica tu conexión.',
-                style: TextStyle(color: AppColors.blanco),
-              ),
+          return const Center(
+            child: Text(
+              'No pudimos cargar tus reservas. Verifica tu conexión.',
+              style: TextStyle(color: AppColors.blanco),
             ),
           );
         }
         final reservas = snapshot.data ?? [];
         if (reservas.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: AppColors.verde,
-              borderRadius: BorderRadius.circular(16),
-            ),
+          return Center(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.travel_explore_outlined,
                     color: AppColors.verdeClaro, size: 48),
@@ -136,20 +171,177 @@ class MisReservasScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () =>
-                      Navigator.of(context).pushReplacementNamed('/'),
+                      Navigator.of(context).pushReplacementNamed('/explorar'),
                   child: const Text('Explorar'),
                 ),
               ],
             ),
           );
         }
-        return Column(
-          children: reservas
-              .map((reserva) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _TarjetaReserva(reserva: reserva, esMovil: esMovil),
-                  ))
-              .toList(),
+        return ListView.separated(
+          itemCount: reservas.length,
+          separatorBuilder: (context, _) => const SizedBox(height: 16),
+          itemBuilder: (context, indice) =>
+              _TarjetaReserva(reserva: reservas[indice], esMovil: esMovil),
+        );
+      },
+    );
+  }
+
+  Widget _listadoCotizaciones(BuildContext context, String usuarioId) {
+    final quotes = context.watch<QuotesController>();
+    final formatoFecha = DateFormat('dd/MM/yyyy');
+
+    return StreamBuilder<List<Cotizacion>>(
+      stream: quotes.cotizacionesDeUsuario(usuarioId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(
+            child: Text(
+              'No pudimos cargar tus cotizaciones. Verifica tu conexión.',
+              style: TextStyle(color: AppColors.blanco),
+            ),
+          );
+        }
+        final cotizaciones = snapshot.data ?? [];
+        if (cotizaciones.isEmpty) {
+          return const Center(
+            child: Text(
+              'No has solicitado cotizaciones todavía.\nEn el detalle de un servicio pulsa "Solicitar una Cotización".',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.verdeClaro, fontSize: 15),
+            ),
+          );
+        }
+        return ListView.separated(
+          itemCount: cotizaciones.length,
+          separatorBuilder: (context, _) => const SizedBox(height: 14),
+          itemBuilder: (context, indice) {
+            final cotizacion = cotizaciones[indice];
+            final colorEstado = AppColors.colorDeCotizacion(cotizacion.estado);
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.verde,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          cotizacion.servicioNombre,
+                          style: const TextStyle(
+                              color: AppColors.blanco,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colorEstado.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: colorEstado),
+                        ),
+                        child: Text(
+                          cotizacion.estado,
+                          style: TextStyle(
+                              color: colorEstado,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${cotizacion.huespedes} persona(s)'
+                    '${cotizacion.fechaInicio == null ? '' : ' · ${formatoFecha.format(cotizacion.fechaInicio!)}'}'
+                    '${cotizacion.fechaFin == null ? '' : ' → ${formatoFecha.format(cotizacion.fechaFin!)}'}',
+                    style: const TextStyle(
+                        color: AppColors.verdeClaro, fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Tu mensaje: "${cotizacion.mensaje}"',
+                    style: const TextStyle(
+                        color: AppColors.verdeClaro,
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic),
+                  ),
+                  if (cotizacion.respondida) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorEstado.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: colorEstado),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Feedback del aliado:',
+                            style: TextStyle(
+                                color: AppColors.blanco,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            cotizacion.feedback,
+                            style: const TextStyle(
+                                color: AppColors.blanco,
+                                fontSize: 14,
+                                height: 1.4),
+                          ),
+                          if (cotizacion.precioPropuesto != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Precio propuesto: \$${cotizacion.precioPropuesto!.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                  color: AppColors.amarillo,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (cotizacion.estado != EstadosCotizacion.rechazada) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).pushNamed(
+                              '/servicio',
+                              arguments: cotizacion.servicioId),
+                          icon: const Icon(Icons.bolt_outlined, size: 16),
+                          label: const Text('Ir a reservar'),
+                        ),
+                      ),
+                    ],
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Esperando la respuesta del aliado…',
+                      style: TextStyle(
+                          color: AppColors.advertencia, fontSize: 13),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -217,7 +409,7 @@ class _TarjetaReserva extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${reserva.servicioCiudad} · ${formatoFecha.format(reserva.fechaInicio)} → ${formatoFecha.format(reserva.fechaFin)} · ${reserva.huespedes} huésped(es)',
+                      '${reserva.servicioUbicacion} · ${formatoFecha.format(reserva.fechaInicio)} → ${formatoFecha.format(reserva.fechaFin)} · ${reserva.huespedes} huésped(es)',
                       style: const TextStyle(
                           color: AppColors.verdeClaro, fontSize: 13),
                     ),
@@ -243,14 +435,14 @@ class _TarjetaReserva extends StatelessWidget {
                 const SizedBox(
                     width: 24, height: 24, child: CircularProgressIndicator())
               else ...[
-                if (reserva.estado == EstadosReserva.solicitado)
+                if (reserva.estado == EstadosReserva.pendientePago) ...[
                   OutlinedButton.icon(
                     onPressed: () async {
                       final confirmado = await FeedbackHelper.confirmar(
                         context,
                         titulo: 'Cancelar reserva',
                         mensaje:
-                            '¿Seguro que quieres cancelar tu solicitud en "${reserva.servicioNombre}"? Las fechas quedarán liberadas.',
+                            '¿Seguro que quieres cancelar tu reserva en "${reserva.servicioNombre}"? Las fechas quedarán liberadas.',
                         textoConfirmar: 'Sí, cancelar',
                         textoCancelar: 'Volver',
                       );
@@ -269,7 +461,6 @@ class _TarjetaReserva extends StatelessWidget {
                     icon: const Icon(Icons.close, size: 16),
                     label: const Text('Cancelar'),
                   ),
-                if (reserva.estado == EstadosReserva.aceptado) ...[
                   const SizedBox(width: 10),
                   ElevatedButton.icon(
                     onPressed: () => Navigator.of(context)
@@ -296,7 +487,7 @@ class _TarjetaReserva extends StatelessWidget {
     );
   }
 
-  /// Línea de progreso del flujo Solicitado → Aceptado → Pagado → Disfrutado.
+  /// Línea de progreso del flujo Pendiente de Pago → Pagado → Disfrutado.
   Widget _lineaDeEstados() {
     final indiceActual = EstadosReserva.indiceDe(reserva.estado);
     return Row(

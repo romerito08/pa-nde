@@ -39,8 +39,10 @@ class AppFooter extends StatelessWidget {
                         ],
                       );
                     }),
+                    // Punto de entrada exclusivo al registro de Aliados:
+                    // la página dedicada con beneficios y formulario.
                     _enlace(context, 'Sé un Aliado', () {
-                      Navigator.of(context).pushNamed('/registro');
+                      Navigator.of(context).pushNamed('/se-aliado');
                     }),
                     _enlace(context, 'Ayuda', () {
                       showDialog(

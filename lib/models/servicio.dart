@@ -18,7 +18,9 @@ class EstadosPublicacion {
   static const String pausado = 'Pausado';
 }
 
-/// Documento de la colección `servicios` en Firestore.
+/// Documento de la colección `servicios` en Firestore. La ubicación usa la
+/// estructura estandarizada de Venezuela: Estado + Municipio (dropdowns) y
+/// el campo Dirección como complemento textual.
 class Servicio {
   final String id;
   final String nombre;
@@ -26,7 +28,8 @@ class Servicio {
   final String tipo;
   final double precio;
   final int capacidad;
-  final String ciudad;
+  final String estado;
+  final String municipio;
   final String direccion;
   final List<String> imagenes;
   final double calificacionPromedio;
@@ -41,7 +44,8 @@ class Servicio {
     required this.tipo,
     required this.precio,
     required this.capacidad,
-    required this.ciudad,
+    required this.estado,
+    required this.municipio,
     required this.direccion,
     required this.imagenes,
     required this.calificacionPromedio,
@@ -56,6 +60,14 @@ class Servicio {
   /// alojamientos por noche.
   String get unidadPrecio => esExperiencia ? 'persona' : 'noche';
 
+  /// Ubicación legible "Municipio, Estado".
+  String get ubicacion {
+    if (municipio.isEmpty && estado.isEmpty) return '';
+    if (municipio.isEmpty) return estado;
+    if (estado.isEmpty) return municipio;
+    return '$municipio, $estado';
+  }
+
   /// Primera imagen asociada o cadena vacía si el aliado no cargó URLs.
   String get imagenPrincipal => imagenes.isNotEmpty ? imagenes.first : '';
 
@@ -67,7 +79,9 @@ class Servicio {
       tipo: data['tipo'] ?? TiposServicio.alojamiento,
       precio: (data['precio'] ?? 0).toDouble(),
       capacidad: (data['capacidad'] ?? 1).toInt(),
-      ciudad: data['ciudad'] ?? '',
+      estado: data['estado'] ?? '',
+      // Compatibilidad con documentos antiguos que usaban 'ciudad' libre.
+      municipio: data['municipio'] ?? data['ciudad'] ?? '',
       direccion: data['direccion'] ?? '',
       imagenes: List<String>.from(data['imagenes'] ?? const []),
       calificacionPromedio: (data['calificacionPromedio'] ?? 0).toDouble(),
@@ -84,7 +98,8 @@ class Servicio {
       'tipo': tipo,
       'precio': precio,
       'capacidad': capacidad,
-      'ciudad': ciudad,
+      'estado': estado,
+      'municipio': municipio,
       'direccion': direccion,
       'imagenes': imagenes,
       'calificacionPromedio': calificacionPromedio,

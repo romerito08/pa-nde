@@ -6,13 +6,15 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../core/widgets/selector_geografico.dart';
 import '../logic/catalog_controller.dart';
 import 'widgets/servicio_card.dart';
 
-/// Pantalla principal de exploración (RF02/RF03/RF10/RF11): hero con
-/// fotografía, barra de filtros por ciudad, fecha y presupuesto máximo,
-/// banner de advertencia ante búsquedas vacías, botón "Limpiar Filtros" y
-/// GridView dinámico con las tarjetas del catálogo, fiel al diseño de Figma.
+/// Pantalla de exploración (RF02/RF03/RF10/RF11): hero con fotografía,
+/// barra de filtros con dropdowns estandarizados de Estado/Municipio de
+/// Venezuela, fecha y presupuesto máximo, banner de advertencia ante
+/// búsquedas vacías, botón "Limpiar Filtros" y GridView dinámico fiel al
+/// diseño de Figma.
 class ExplorarScreen extends StatefulWidget {
   const ExplorarScreen({super.key});
 
@@ -21,15 +23,13 @@ class ExplorarScreen extends StatefulWidget {
 }
 
 class _ExplorarScreenState extends State<ExplorarScreen> {
-  final _ciudadController = TextEditingController();
   final _presupuestoController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Repone los valores cuando se regresa a la pantalla con filtros activos.
+    // Repone el presupuesto cuando se regresa con filtros activos.
     final catalogo = context.read<CatalogController>();
-    _ciudadController.text = catalogo.ciudad;
     _presupuestoController.text = catalogo.presupuestoMaximo == null
         ? ''
         : catalogo.presupuestoMaximo!.toStringAsFixed(0);
@@ -37,7 +37,6 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
 
   @override
   void dispose() {
-    _ciudadController.dispose();
     _presupuestoController.dispose();
     super.dispose();
   }
@@ -69,13 +68,11 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
 
   void _buscar() {
     final catalogo = context.read<CatalogController>();
-    catalogo.actualizarCiudad(_ciudadController.text);
     catalogo.actualizarPresupuesto(_presupuestoController.text);
     catalogo.buscar();
   }
 
   void _limpiar() {
-    _ciudadController.clear();
     _presupuestoController.clear();
     context.read<CatalogController>().limpiarFiltros();
   }
@@ -86,13 +83,15 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
       builder: (context, constraints) {
         final esMovil = constraints.maxWidth < 850;
         return Scaffold(
-          drawer: esMovil ? const AppDrawer(rutaActual: '/') : null,
-          appBar:
-              esMovil ? const AppHeader(rutaActual: '/', esMovil: true) : null,
+          drawer: esMovil ? const AppDrawer(rutaActual: '/explorar') : null,
+          appBar: esMovil
+              ? const AppHeader(rutaActual: '/explorar', esMovil: true)
+              : null,
           body: SingleChildScrollView(
             child: Column(
               children: [
-                if (!esMovil) const AppHeader(rutaActual: '/', esMovil: false),
+                if (!esMovil)
+                  const AppHeader(rutaActual: '/explorar', esMovil: false),
                 _hero(esMovil),
                 Center(
                   child: ConstrainedBox(
@@ -137,30 +136,39 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "¿Pa'onde quieres ir?",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.blanco,
-                  fontSize: esMovil ? 28 : 40,
-                  fontWeight: FontWeight.w700,
-                  shadows: const [Shadow(blurRadius: 10, color: Colors.black87)],
+          // Escala el bloque en viewports diminutos (primer frame de Flutter
+          // Web) para que el hero de altura fija nunca desborde.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "¿Pa'onde quieres ir?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.blanco,
+                    fontSize: esMovil ? 28 : 40,
+                    fontWeight: FontWeight.w700,
+                    shadows: const [
+                      Shadow(blurRadius: 10, color: Colors.black87)
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Turismo low-cost y sostenible por toda Venezuela',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.blanco,
-                  fontSize: esMovil ? 14 : 18,
-                  shadows: const [Shadow(blurRadius: 8, color: Colors.black87)],
+                const SizedBox(height: 8),
+                Text(
+                  'Turismo low-cost y sostenible por toda Venezuela',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.blanco,
+                    fontSize: esMovil ? 14 : 18,
+                    shadows: const [
+                      Shadow(blurRadius: 8, color: Colors.black87)
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -171,15 +179,15 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
     final catalogo = context.watch<CatalogController>();
     final formatoFecha = DateFormat('dd/MM/yyyy');
 
-    final campoCiudad = TextField(
-      controller: _ciudadController,
-      style: const TextStyle(color: AppColors.blanco),
-      onSubmitted: (_) => _buscar(),
-      decoration: const InputDecoration(
-        labelText: 'Ciudad o destino',
-        prefixIcon: Icon(Icons.location_on_outlined,
-            color: AppColors.verdeClaro, size: 20),
-      ),
+    // Dropdowns estandarizados de Estado y Municipio (nunca texto libre).
+    final campoUbicacion = SelectorGeografico(
+      estado: catalogo.estado,
+      municipio: catalogo.municipio,
+      permitirTodos: true,
+      enFila: !esMovil,
+      onChanged: (estado, municipio) => context
+          .read<CatalogController>()
+          .actualizarUbicacion(estado, municipio),
     );
 
     final campoFecha = InkWell(
@@ -218,6 +226,7 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
     );
 
     final botones = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         ElevatedButton.icon(
@@ -244,7 +253,7 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                campoCiudad,
+                campoUbicacion,
                 const SizedBox(height: 12),
                 campoFecha,
                 const SizedBox(height: 12),
@@ -253,14 +262,18 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
                 botones,
               ],
             )
-          : Row(
+          : Column(
               children: [
-                Expanded(flex: 3, child: campoCiudad),
-                const SizedBox(width: 12),
-                Expanded(flex: 2, child: campoFecha),
-                const SizedBox(width: 12),
-                Expanded(flex: 2, child: campoPresupuesto),
-                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    Expanded(flex: 5, child: campoUbicacion),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: campoFecha),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: campoPresupuesto),
+                  ],
+                ),
+                const SizedBox(height: 14),
                 botones,
               ],
             ),

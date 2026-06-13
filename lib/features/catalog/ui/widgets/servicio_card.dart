@@ -5,191 +5,195 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../models/servicio.dart';
 import '../../logic/favoritos_controller.dart';
 
-/// Tarjeta de servicio fiel al componente "Card" de Figma (300×350):
-/// imagen superior con esquinas redondeadas, fila pin + ubicación, título en
-/// bold, descripción de dos líneas, estrellas con promedio, precio y botón
-/// amarillo "Reservar" junto al corazón de favoritos.
+/// Tarjeta de servicio fiel al componente "Card" de Figma: fondo blanco,
+/// imagen superior, fila pin + ubicación con las estrellas a la derecha,
+/// título en negro, descripción gris y fila inferior con el botón oscuro
+/// "Reservar", el corazón de favoritos y el precio "50$/noche".
+/// Soporta la variante horizontal (imagen a la izquierda) usada en la
+/// sección "Experiencias" de la Landing.
 class ServicioCard extends StatelessWidget {
   final Servicio servicio;
   final VoidCallback alReservar;
+  final bool horizontal;
 
   const ServicioCard({
     super.key,
     required this.servicio,
     required this.alReservar,
+    this.horizontal = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: horizontal
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 2, child: _imagen()),
+                Expanded(flex: 3, child: _contenido(context)),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 5, child: _imagen()),
+                Expanded(flex: 6, child: _contenido(context)),
+              ],
+            ),
+    );
+  }
+
+  /// Imagen del servicio gestionada por URL, con placeholder a cuadros
+  /// claros como en el prototipo cuando no hay imagen o falla la carga.
+  Widget _imagen() {
+    if (servicio.imagenPrincipal.isEmpty) {
+      return Container(
+        color: const Color(0xFFEDEDED),
+        child: const Center(
+          child:
+              Icon(Icons.landscape_outlined, size: 44, color: Colors.black26),
+        ),
+      );
+    }
+    return Image.network(
+      servicio.imagenPrincipal,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, hijo, progreso) => progreso == null
+          ? hijo
+          : Container(
+              color: const Color(0xFFEDEDED),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+      errorBuilder: (context, _, _) => Container(
+        color: const Color(0xFFEDEDED),
+        child: const Center(
+          child: Icon(Icons.broken_image_outlined,
+              size: 36, color: Colors.black26),
+        ),
+      ),
+    );
+  }
+
+  Widget _contenido(BuildContext context) {
     final favoritos = context.watch<FavoritosController>();
     final esFavorito = favoritos.esFavorito(servicio.id);
+    final estrellas = servicio.calificacionPromedio.round().clamp(0, 5);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return Padding(
+      padding: const EdgeInsets.all(12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Imagen del servicio (gestión por URL) ---
-          Expanded(
-            flex: 5,
-            child: servicio.imagenPrincipal.isEmpty
-                ? Container(
-                    color: AppColors.verdeOscuro,
-                    child: const Center(
-                      child: Icon(Icons.landscape_outlined,
-                          size: 48, color: AppColors.verdeClaro),
-                    ),
-                  )
-                : Image.network(
-                    servicio.imagenPrincipal,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, hijo, progreso) =>
-                        progreso == null
-                            ? hijo
-                            : Container(
-                                color: AppColors.verdeOscuro,
-                                child: const Center(
-                                    child: CircularProgressIndicator()),
-                              ),
-                    errorBuilder: (context, _, _) => Container(
-                      color: AppColors.verdeOscuro,
-                      child: const Center(
-                        child: Icon(Icons.broken_image_outlined,
-                            size: 40, color: AppColors.verdeClaro),
-                      ),
-                    ),
-                  ),
-          ),
-          Expanded(
-            flex: 6,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 14, color: AppColors.verdeClaro),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          servicio.ciudad,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.verdeClaro),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.verdeOscuro,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          servicio.tipo,
-                          style: const TextStyle(
-                              fontSize: 10, color: AppColors.amarillo),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    servicio.nombre,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.blanco),
-                  ),
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: Text(
-                      servicio.descripcion,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.verdeClaro),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      ...List.generate(5, (i) {
-                        return Icon(
-                          i < servicio.calificacionPromedio.round()
-                              ? Icons.star
-                              : Icons.star_border,
-                          size: 14,
-                          color: AppColors.amarillo,
-                        );
-                      }),
-                      const SizedBox(width: 4),
-                      Text(
-                        '(${servicio.totalResenas})',
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.verdeClaro),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '\$${servicio.precio.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.amarillo),
-                      ),
-                      Text(
-                        ' / ${servicio.unidadPrecio}',
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.verdeClaro),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 35,
-                          child: ElevatedButton(
-                            onPressed: alReservar,
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(67, 35),
-                            ),
-                            child: const Text('Reservar',
-                                style: TextStyle(fontSize: 14)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () => context
-                            .read<FavoritosController>()
-                            .alternar(servicio.id),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            esFavorito
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            size: 22,
-                            color: esFavorito
-                                ? AppColors.amarillo
-                                : AppColors.verdeClaro,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          // --- Pin + ubicación a la izquierda, estrellas a la derecha ---
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined,
+                  size: 13, color: Colors.black54),
+              const SizedBox(width: 3),
+              Expanded(
+                child: Text(
+                  servicio.ubicacion.isEmpty ? 'Venezuela' : servicio.ubicacion,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                ),
               ),
+              ...List.generate(5, (i) {
+                return Icon(
+                  i < estrellas ? Icons.star : Icons.star_border,
+                  size: 12,
+                  color: i < estrellas
+                      ? const Color(0xFFE8B931)
+                      : Colors.black26,
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            servicio.nombre,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87),
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: Text(
+              servicio.descripcion,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 11, color: Colors.black54, height: 1.35),
             ),
+          ),
+          const SizedBox(height: 8),
+          // --- Reservar + corazón + precio ---
+          Row(
+            children: [
+              SizedBox(
+                height: 30,
+                child: ElevatedButton(
+                  onPressed: alReservar,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.verdeOscuro,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(72, 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  child: const Text('Reservar'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () =>
+                    context.read<FavoritosController>().alternar(servicio.id),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black26),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    esFavorito ? Icons.favorite : Icons.favorite_border,
+                    size: 16,
+                    color: esFavorito ? AppColors.amarillo : Colors.black54,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${servicio.precio.toStringAsFixed(0)}\$',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87),
+                    ),
+                    TextSpan(
+                      text: '/${servicio.unidadPrecio}',
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

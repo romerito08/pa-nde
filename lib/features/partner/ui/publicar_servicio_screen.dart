@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/feedback_helper.dart';
 import '../../../core/widgets/paonde_stepper.dart';
+import '../../../core/widgets/selector_geografico.dart';
 import '../../../models/servicio.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../logic/publicacion_controller.dart';
@@ -290,7 +291,7 @@ class _ContenidoStepper extends StatelessWidget {
     );
   }
 
-  // --- PASO 3: UBICACIÓN ---
+  // --- PASO 3: UBICACIÓN (Estado/Municipio estandarizados + dirección) ---
   Widget _pasoUbicacion(
       BuildContext context, PublicacionController controlador) {
     return Column(
@@ -299,25 +300,25 @@ class _ContenidoStepper extends StatelessWidget {
         Text('Ubicación', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
         const Text(
-          '¿Dónde encontrarán tu servicio los exploradores?',
+          '¿Dónde encontrarán tu servicio los exploradores? Elige de la lista oficial de estados y municipios.',
           style: TextStyle(color: AppColors.verdeClaro),
         ),
         const SizedBox(height: 24),
-        TextField(
-          controller: controlador.ciudadController,
-          style: const TextStyle(color: AppColors.blanco),
-          decoration: const InputDecoration(
-            labelText: 'Ciudad',
-            prefixIcon: Icon(Icons.location_city_outlined,
-                color: AppColors.verdeClaro, size: 20),
-          ),
+        SelectorGeografico(
+          estado: controlador.estadoSeleccionado,
+          municipio: controlador.municipioSeleccionado,
+          enFila: false,
+          onChanged: (estado, municipio) => context
+              .read<PublicacionController>()
+              .cambiarUbicacion(estado, municipio),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: controlador.direccionController,
           style: const TextStyle(color: AppColors.blanco),
           decoration: const InputDecoration(
-            labelText: 'Dirección o punto de referencia',
+            labelText: 'Dirección o punto de referencia (complemento)',
+            hintText: 'Ej.: Av. principal de Choroní, casa #12, frente a la plaza',
             prefixIcon: Icon(Icons.location_on_outlined,
                 color: AppColors.verdeClaro, size: 20),
           ),

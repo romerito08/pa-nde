@@ -66,13 +66,15 @@ class CatalogRepository {
   /// tendencias del dashboard del Administrador (RF12). Es "fire-and-forget":
   /// un fallo aquí jamás debe romper la experiencia del Explorador.
   Future<void> registrarBusqueda({
-    String? ciudad,
+    String? estado,
+    String? municipio,
     DateTime? fecha,
     double? presupuestoMaximo,
   }) async {
     try {
       await _firestore.collection('busquedas').add({
-        'ciudad': (ciudad ?? '').trim().isEmpty ? null : ciudad!.trim(),
+        'estado': estado,
+        'municipio': municipio,
         'fecha': fecha == null ? null : Timestamp.fromDate(fecha),
         'presupuestoMaximo': presupuestoMaximo,
         'creadoEn': FieldValue.serverTimestamp(),

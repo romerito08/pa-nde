@@ -8,10 +8,11 @@ import '../../../models/usuario.dart';
 import '../data/booking_repository.dart';
 import 'price_strategy.dart';
 
-/// Controlador del flujo de reserva en la vista de detalle (RF05).
-/// Carga las ocupaciones desde `calendarios`, administra el rango de fechas
-/// elegido en el calendario interactivo, el número de huéspedes y crea la
-/// reserva en estado "Solicitado".
+/// Controlador del flujo de reserva directa en la vista de detalle.
+/// Consulta en tiempo real la colección `calendarios` del servicio: si las
+/// fechas elegidas están disponibles, la reserva se procesa automáticamente
+/// — sin aprobación previa del Aliado — y la UI abre de inmediato la
+/// pasarela de pago con la reserva creada.
 class BookingController extends ChangeNotifier {
   final BookingRepository _repository;
   final Servicio servicio;
@@ -133,17 +134,21 @@ class BookingController extends ChangeNotifier {
     return _fechaFin != null;
   }
 
-  /// Crea la reserva en estado "Solicitado" verificando la disponibilidad
-  /// contra `calendarios` justo antes de confirmar. Devuelve el mensaje de
-  /// error amigable o `null` si la solicitud quedó registrada.
-  Future<String?> solicitarReserva(Usuario? usuario) async {
+  /// Reserva directa: verifica la disponibilidad contra `calendarios` justo
+  /// antes de confirmar y, si las fechas están libres, crea la reserva en
+  /// "Pendiente de Pago" bloqueando el calendario. Devuelve la reserva
+  /// persistida (para abrir la pasarela de inmediato) o el mensaje de error.
+  Future<(Reserva?, String?)> reservarDirecto(Usuario? usuario) async {
     if (usuario == null) {
-      return 'Inicia sesión para reservar.';
+      return (null, 'Inicia sesión para reservar.');
     }
     if (!seleccionCompleta) {
-      return servicio.esExperiencia
-          ? 'Selecciona la fecha de tu experiencia en el calendario.'
-          : 'Selecciona las fechas de entrada y salida en el calendario.';
+      return (
+        null,
+        servicio.esExperiencia
+            ? 'Selecciona la fecha de tu experiencia en el calendario.'
+            : 'Selecciona las fechas de entrada y salida en el calendario.',
+      );
     }
 
     // Las experiencias ocupan un solo día: el rango cierra al día siguiente.
@@ -155,35 +160,35 @@ class BookingController extends ChangeNotifier {
     _procesando = true;
     notifyListeners();
     try {
-      await _repository.crearReserva(
-        Reserva(
-          id: '',
-          servicioId: servicio.id,
-          servicioNombre: servicio.nombre,
-          servicioImagen: servicio.imagenPrincipal,
-          servicioCiudad: servicio.ciudad,
-          aliadoId: servicio.creadoPor,
-          usuarioId: usuario.uid,
-          usuarioNombre: usuario.nombreCompleto,
-          fechaInicio: inicio,
-          fechaFin: fin,
-          huespedes: _huespedes,
-          total: totalEstimado,
-          estado: EstadosReserva.solicitado,
-          metodoPago: '',
-        ),
+      final borrador = Reserva(
+        id: '',
+        servicioId: servicio.id,
+        servicioNombre: servicio.nombre,
+        servicioImagen: servicio.imagenPrincipal,
+        servicioUbicacion: servicio.ubicacion,
+        aliadoId: servicio.creadoPor,
+        usuarioId: usuario.uid,
+        usuarioNombre: usuario.nombreCompleto,
+        fechaInicio: inicio,
+        fechaFin: fin,
+        huespedes: _huespedes,
+        total: totalEstimado,
+        estado: EstadosReserva.pendientePago,
+        metodoPago: '',
       );
+      final reservaId = await _repository.crearReserva(borrador);
+
       // Refresca las ocupaciones para que el calendario refleje el bloqueo.
       await _cargarOcupaciones();
       _fechaInicio = null;
       _fechaFin = null;
       _procesando = false;
       notifyListeners();
-      return null;
+      return (borrador.copyWith(id: reservaId), null);
     } on AppException catch (e) {
       _procesando = false;
       notifyListeners();
-      return e.mensaje;
+      return (null, e.mensaje);
     }
   }
 }

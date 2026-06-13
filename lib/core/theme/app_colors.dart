@@ -26,22 +26,36 @@ class AppColors {
   static const Color advertencia = Color(0xFFFFA726);
 
   // --- Colores asociados al ciclo de vida de una reserva ---
-  static const Color estadoSolicitado = advertencia;
-  static const Color estadoAceptado = Color(0xFF42A5F5);
+  static const Color estadoPendientePago = advertencia;
   static const Color estadoPagado = exito;
   static const Color estadoDisfrutado = amarillo;
+  static const Color informacion = Color(0xFF42A5F5);
 
   /// Devuelve el color identificador de un estado de reserva.
   static Color colorDeEstado(String estado) {
     switch (estado) {
-      case 'Solicitado':
-        return estadoSolicitado;
-      case 'Aceptado':
-        return estadoAceptado;
+      case 'Pendiente de Pago':
+        return estadoPendientePago;
       case 'Pagado':
         return estadoPagado;
       case 'Disfrutado':
         return estadoDisfrutado;
+      default:
+        return verdeClaro;
+    }
+  }
+
+  /// Devuelve el color identificador de un estado de cotización.
+  static Color colorDeCotizacion(String estado) {
+    switch (estado) {
+      case 'Pendiente':
+        return advertencia;
+      case 'Aceptada':
+        return exito;
+      case 'Rechazada':
+        return error;
+      case 'Contrapropuesta':
+        return informacion;
       default:
         return verdeClaro;
     }

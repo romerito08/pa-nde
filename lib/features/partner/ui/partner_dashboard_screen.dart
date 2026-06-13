@@ -155,14 +155,17 @@ class _ContenidoDashboard extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Conectando tus rutas con nuevos exploradores',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.blanco,
-              fontSize: esMovil ? 20 : 32,
-              fontWeight: FontWeight.w700,
-              shadows: const [Shadow(blurRadius: 10, color: Colors.black87)],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Conectando tus rutas\ncon nuevos exploradores',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.blanco,
+                fontSize: esMovil ? 20 : 32,
+                fontWeight: FontWeight.w700,
+                shadows: const [Shadow(blurRadius: 10, color: Colors.black87)],
+              ),
             ),
           ),
         ),
@@ -176,12 +179,18 @@ class _ContenidoDashboard extends StatelessWidget {
         titulo: 'Ganancias (Pagado/Disfrutado)',
         valor: '\$${panel.gananciasTotales.toStringAsFixed(2)}'
       ),
-      (titulo: 'Por cobrar', valor: '\$${panel.porCobrar.toStringAsFixed(2)}'),
+      (
+        titulo: 'Por cobrar (pendiente de pago)',
+        valor: '\$${panel.porCobrar.toStringAsFixed(2)}'
+      ),
       (
         titulo: 'Reservas confirmadas',
         valor: '${panel.reservasConfirmadas}'
       ),
-      (titulo: 'Nuevas solicitudes', valor: '${panel.solicitudesNuevas}'),
+      (
+        titulo: 'Cotizaciones por responder',
+        valor: '${panel.cotizacionesPendientes}'
+      ),
       (
         titulo: 'Satisfacción del cliente',
         valor: panel.satisfaccionPromedio == 0

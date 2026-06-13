@@ -65,29 +65,53 @@ service cloud.firestore {
       }
     }
 
-    // ------- reservas: flujo Solicitado → Aceptado → Pagado → Disfrutado -------
+    // ------- reservas: flujo directo Pendiente de Pago → Pagado → Disfrutado -------
     match /reservas/{reservaId} {
+      allow read: if autenticado()
+        && (resource.data.usuarioId == request.auth.uid
+            || resource.data.aliadoId == request.auth.uid
+            || esAdministrador());
+      // Reserva directa: nace en "Pendiente de Pago" sin aprobación previa.
+      allow create: if autenticado()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'Pendiente de Pago'
+        && request.resource.data.total is number
+        && request.resource.data.total > 0;
+      // El explorador registra su pago; el aliado marca disfrutada la
+      // estadía pagada que concluyó.
+      allow update: if autenticado() && (
+        (resource.data.usuarioId == request.auth.uid
+          && request.resource.data.estado == 'Pagado'
+          && resource.data.estado == 'Pendiente de Pago')
+        || (resource.data.aliadoId == request.auth.uid
+          && request.resource.data.estado == 'Disfrutado'
+          && resource.data.estado == 'Pagado')
+      );
+      // Solo se cancela (borra) una reserva que aún no fue pagada.
+      allow delete: if autenticado()
+        && resource.data.usuarioId == request.auth.uid
+        && resource.data.estado == 'Pendiente de Pago';
+    }
+
+    // ------- cotizaciones: solicitud del explorador + feedback del aliado -------
+    match /cotizaciones/{cotizacionId} {
       allow read: if autenticado()
         && (resource.data.usuarioId == request.auth.uid
             || resource.data.aliadoId == request.auth.uid
             || esAdministrador());
       allow create: if autenticado()
         && request.resource.data.usuarioId == request.auth.uid
-        && request.resource.data.estado == 'Solicitado'
-        && request.resource.data.total is number
-        && request.resource.data.total > 0;
-      // El aliado acepta y marca disfrutado; el explorador registra su pago.
-      allow update: if autenticado() && (
-        (resource.data.aliadoId == request.auth.uid
-          && request.resource.data.estado in ['Aceptado', 'Disfrutado'])
-        || (resource.data.usuarioId == request.auth.uid
-          && request.resource.data.estado == 'Pagado'
-          && resource.data.estado == 'Aceptado')
-      );
-      // Solo se cancela (borra) una solicitud que aún no fue aceptada.
-      allow delete: if autenticado()
-        && resource.data.usuarioId == request.auth.uid
-        && resource.data.estado == 'Solicitado';
+        && request.resource.data.estado == 'Pendiente'
+        && request.resource.data.mensaje is string
+        && request.resource.data.mensaje.size() >= 10;
+      // Solo el aliado destinatario responde, mutando el estado y dejando
+      // su feedback obligatorio.
+      allow update: if autenticado()
+        && resource.data.aliadoId == request.auth.uid
+        && request.resource.data.estado in ['Aceptada', 'Rechazada', 'Contrapropuesta']
+        && request.resource.data.feedback is string
+        && request.resource.data.feedback.size() > 0;
+      allow delete: if esAdministrador();
     }
 
     // ------- calendarios: disponibilidad consultable por todos -------

@@ -108,14 +108,14 @@ class AdminDashboardController extends ChangeNotifier {
     });
   }
 
-  /// Destinos más buscados por los exploradores (top 5 para el BarChart).
+  /// Destinos más buscados por los exploradores (top 5 para el BarChart),
+  /// agrupados por municipio/estado estandarizado.
   List<MapEntry<String, int>> get destinosMasBuscados {
     final conteo = <String, int>{};
     for (final busqueda in _busquedas) {
-      final ciudad = busqueda.ciudad?.trim();
-      if (ciudad == null || ciudad.isEmpty) continue;
-      final clave = ciudad[0].toUpperCase() + ciudad.substring(1).toLowerCase();
-      conteo[clave] = (conteo[clave] ?? 0) + 1;
+      final destino = busqueda.destino;
+      if (destino == null) continue;
+      conteo[destino] = (conteo[destino] ?? 0) + 1;
     }
     final ordenado = conteo.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));

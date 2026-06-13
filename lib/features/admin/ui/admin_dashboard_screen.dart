@@ -406,7 +406,7 @@ class _ContenidoAdmin extends StatelessWidget {
         rangos.values.fold<int>(0, (acumulado, v) => acumulado + v);
     const coloresRangos = [
       AppColors.amarillo,
-      AppColors.estadoAceptado,
+      AppColors.informacion,
       AppColors.exito,
       AppColors.advertencia,
     ];

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/venezuela_geo.dart';
 import '../../../core/utils/app_exception.dart';
 import '../../../models/servicio.dart';
 import '../../../models/usuario.dart';
@@ -9,6 +10,7 @@ import '../data/servicio_repository.dart';
 /// stepper lineal continuo de 4 pasos reales — "Identidad", "Costos",
 /// "Ubicación" y "Éxito" — gobernado por el botón "Siguiente". Sirve tanto
 /// para crear como para editar (RF13), administrando las URLs de imágenes.
+/// La ubicación usa los dropdowns estandarizados de Estado/Municipio.
 class PublicacionController extends ChangeNotifier {
   final ServicioRepository _repository;
 
@@ -33,8 +35,9 @@ class PublicacionController extends ChangeNotifier {
   final precioController = TextEditingController();
   final capacidadController = TextEditingController();
 
-  // --- Paso 3: Ubicación ---
-  final ciudadController = TextEditingController();
+  // --- Paso 3: Ubicación (estandarizada) ---
+  String? estadoSeleccionado;
+  String? municipioSeleccionado;
   final direccionController = TextEditingController();
 
   int _pasoActual = 0;
@@ -53,7 +56,12 @@ class PublicacionController extends ChangeNotifier {
       imagenes.addAll(inicial.imagenes);
       precioController.text = inicial.precio.toStringAsFixed(0);
       capacidadController.text = inicial.capacidad.toString();
-      ciudadController.text = inicial.ciudad;
+      // Solo se precargan ubicaciones que existan en la estructura oficial;
+      // los documentos antiguos con texto libre obligan a re-seleccionar.
+      if (VenezuelaGeo.esUbicacionValida(inicial.estado, inicial.municipio)) {
+        estadoSeleccionado = inicial.estado;
+        municipioSeleccionado = inicial.municipio;
+      }
       direccionController.text = inicial.direccion;
     }
   }
@@ -66,6 +74,12 @@ class PublicacionController extends ChangeNotifier {
 
   void cambiarTipo(String nuevoTipo) {
     tipo = nuevoTipo;
+    notifyListeners();
+  }
+
+  void cambiarUbicacion(String? estado, String? municipio) {
+    estadoSeleccionado = estado;
+    municipioSeleccionado = municipio;
     notifyListeners();
   }
 
@@ -119,11 +133,12 @@ class PublicacionController extends ChangeNotifier {
         }
         return null;
       case 2:
-        if (ciudadController.text.trim().isEmpty) {
-          return 'Indica la ciudad donde se ofrece el servicio.';
+        if (!VenezuelaGeo.esUbicacionValida(
+            estadoSeleccionado, municipioSeleccionado)) {
+          return 'Selecciona el Estado y el Municipio de la lista oficial.';
         }
         if (direccionController.text.trim().isEmpty) {
-          return 'Indica la dirección o punto de referencia.';
+          return 'Indica la dirección o punto de referencia que complemente la ubicación.';
         }
         return null;
       default:
@@ -175,7 +190,8 @@ class PublicacionController extends ChangeNotifier {
         tipo: tipo,
         precio: double.parse(precioController.text.replaceAll(',', '.')),
         capacidad: int.parse(capacidadController.text),
-        ciudad: ciudadController.text.trim(),
+        estado: estadoSeleccionado!,
+        municipio: municipioSeleccionado!,
         direccion: direccionController.text.trim(),
         imagenes: List.of(imagenes),
         calificacionPromedio: servicioInicial?.calificacionPromedio ?? 0,
@@ -213,7 +229,6 @@ class PublicacionController extends ChangeNotifier {
     imagenUrlController.dispose();
     precioController.dispose();
     capacidadController.dispose();
-    ciudadController.dispose();
     direccionController.dispose();
     super.dispose();
   }

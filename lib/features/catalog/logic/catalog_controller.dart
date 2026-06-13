@@ -7,9 +7,10 @@ import '../../../models/servicio.dart';
 import '../data/catalog_repository.dart';
 
 /// Controlador reactivo del buscador y catálogo (RF02/RF03/RF10/RF11).
-/// Mantiene los filtros (ciudad, fecha, presupuesto máximo), valida que no
-/// se disparen búsquedas vacías mostrando una advertencia visual, aplica el
-/// filtrado sobre el stream de servicios y resetea todo con "Limpiar Filtros".
+/// Los filtros geográficos usan la estructura estandarizada de Venezuela
+/// (Estado/Municipio por dropdown, nunca texto libre), más fecha y
+/// presupuesto máximo. Valida búsquedas vacías con una advertencia visual y
+/// restablece todo con "Limpiar Filtros".
 class CatalogController extends ChangeNotifier {
   final CatalogRepository _repository;
   StreamSubscription<List<Servicio>>? _suscripcion;
@@ -20,7 +21,8 @@ class CatalogController extends ChangeNotifier {
   String? _error;
 
   // --- Estado de los filtros ---
-  String _ciudad = '';
+  String? _estado;
+  String? _municipio;
   DateTime? _fecha;
   double? _presupuestoMaximo;
   bool _filtrosAplicados = false;
@@ -39,7 +41,8 @@ class CatalogController extends ChangeNotifier {
   String? get advertencia => _advertencia;
   bool get filtrosAplicados => _filtrosAplicados;
 
-  String get ciudad => _ciudad;
+  String? get estado => _estado;
+  String? get municipio => _municipio;
   DateTime? get fecha => _fecha;
   double? get presupuestoMaximo => _presupuestoMaximo;
 
@@ -69,8 +72,11 @@ class CatalogController extends ChangeNotifier {
     );
   }
 
-  void actualizarCiudad(String valor) {
-    _ciudad = valor;
+  /// Selección de los dropdowns Estado/Municipio del filtro.
+  void actualizarUbicacion(String? estado, String? municipio) {
+    _estado = estado;
+    _municipio = municipio;
+    notifyListeners();
   }
 
   void actualizarFecha(DateTime? valor) {
@@ -91,13 +97,13 @@ class CatalogController extends ChangeNotifier {
   /// están vacíos dispara la advertencia visual (banner en la UI) y no
   /// consulta nada (RF02).
   Future<void> buscar() async {
-    final sinCiudad = _ciudad.trim().isEmpty;
+    final sinUbicacion = _estado == null && _municipio == null;
     final sinFecha = _fecha == null;
     final sinPresupuesto = _presupuestoMaximo == null || _presupuestoMaximo! <= 0;
 
-    if (sinCiudad && sinFecha && sinPresupuesto) {
+    if (sinUbicacion && sinFecha && sinPresupuesto) {
       _advertencia =
-          'Completa al menos un filtro (ciudad, fecha o presupuesto) antes de buscar.';
+          'Completa al menos un filtro (estado/municipio, fecha o presupuesto) antes de buscar.';
       notifyListeners();
       return;
     }
@@ -109,7 +115,8 @@ class CatalogController extends ChangeNotifier {
     try {
       // La tendencia se registra para los gráficos del Administrador (RF12).
       await _repository.registrarBusqueda(
-        ciudad: sinCiudad ? null : _ciudad,
+        estado: _estado,
+        municipio: _municipio,
         fecha: _fecha,
         presupuestoMaximo: sinPresupuesto ? null : _presupuestoMaximo,
       );
@@ -134,25 +141,28 @@ class CatalogController extends ChangeNotifier {
 
   void _aplicarFiltrosLocales({Set<String>? ocupadosEnFecha}) {
     if (ocupadosEnFecha != null) _ultimosOcupados = ocupadosEnFecha;
-    final ciudadNormalizada = _ciudad.trim().toLowerCase();
 
     _resultados = _todos.where((servicio) {
-      final coincideCiudad = ciudadNormalizada.isEmpty ||
-          servicio.ciudad.toLowerCase().contains(ciudadNormalizada) ||
-          servicio.nombre.toLowerCase().contains(ciudadNormalizada);
+      final coincideEstado = _estado == null || servicio.estado == _estado;
+      final coincideMunicipio =
+          _municipio == null || servicio.municipio == _municipio;
       final coincidePresupuesto = _presupuestoMaximo == null ||
           _presupuestoMaximo! <= 0 ||
           servicio.precio <= _presupuestoMaximo!;
       final disponibleEnFecha = _fecha == null ||
           !(_ultimosOcupados?.contains(servicio.id) ?? false);
-      return coincideCiudad && coincidePresupuesto && disponibleEnFecha;
+      return coincideEstado &&
+          coincideMunicipio &&
+          coincidePresupuesto &&
+          disponibleEnFecha;
     }).toList();
   }
 
   /// Botón "Limpiar Filtros" (RF03): restablece todos los estados al valor
   /// por defecto y vuelve a mostrar el catálogo completo.
   void limpiarFiltros() {
-    _ciudad = '';
+    _estado = null;
+    _municipio = null;
     _fecha = null;
     _presupuestoMaximo = null;
     _filtrosAplicados = false;

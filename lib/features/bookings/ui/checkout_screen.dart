@@ -108,23 +108,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               style:
                                   Theme.of(context).textTheme.headlineLarge),
                           const SizedBox(height: 32),
-                          Flex(
-                            direction: esMovil ? Axis.vertical : Axis.horizontal,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: esMovil ? 0 : 1,
-                                child: _resumenReserva(formatoFecha),
-                              ),
-                              SizedBox(
-                                  width: esMovil ? 0 : 32,
-                                  height: esMovil ? 24 : 0),
-                              Expanded(
-                                flex: esMovil ? 0 : 1,
-                                child: _pasarela(),
-                              ),
-                            ],
-                          ),
+                          if (esMovil)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _resumenReserva(formatoFecha),
+                                const SizedBox(height: 24),
+                                _pasarela(),
+                              ],
+                            )
+                          else
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _resumenReserva(formatoFecha)),
+                                const SizedBox(width: 32),
+                                Expanded(child: _pasarela()),
+                              ],
+                            ),
                         ],
                       ),
                     ),
@@ -170,7 +171,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            reserva.servicioCiudad,
+            reserva.servicioUbicacion,
             style: const TextStyle(color: AppColors.verdeClaro, fontSize: 14),
           ),
           const SizedBox(height: 16),

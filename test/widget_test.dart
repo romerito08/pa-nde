@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:paonde_app/core/data/venezuela_geo.dart';
 import 'package:paonde_app/core/theme/app_colors.dart';
+import 'package:paonde_app/core/utils/validadores.dart';
 import 'package:paonde_app/core/widgets/paonde_stepper.dart';
 import 'package:paonde_app/features/bookings/logic/price_strategy.dart';
 import 'package:paonde_app/models/reserva.dart';
@@ -30,6 +32,41 @@ void main() {
     });
   });
 
+  group('Validación de correo institucional UNIMET (RegEx)', () {
+    test('acepta los dominios institucionales exactos', () {
+      expect(Validadores.esCorreoUnimet('ana.perez@unimet.edu.ve'), isTrue);
+      expect(
+          Validadores.esCorreoUnimet('j.gomez@correo.unimet.edu.ve'), isTrue);
+      expect(Validadores.esCorreoUnimet('MAYUS@UNIMET.EDU.VE'), isTrue);
+    });
+
+    test('bloquea cualquier otro dominio o sufijo parecido', () {
+      expect(Validadores.esCorreoUnimet('ana@gmail.com'), isFalse);
+      expect(Validadores.esCorreoUnimet('ana@unimet.edu.ve.evil.com'), isFalse);
+      expect(Validadores.esCorreoUnimet('ana@otracorreo.unimet.com'), isFalse);
+      expect(Validadores.esCorreoUnimet('ana@falso-unimet.edu.ve'), isFalse);
+      expect(Validadores.esCorreoUnimet(''), isFalse);
+    });
+  });
+
+  group('Estructura geográfica estandarizada de Venezuela', () {
+    test('contiene las 24 entidades federales', () {
+      expect(VenezuelaGeo.estados.length, 24);
+      expect(VenezuelaGeo.estados, contains('Distrito Capital'));
+      expect(VenezuelaGeo.estados, contains('Miranda'));
+    });
+
+    test('encadena municipios por estado y valida pares', () {
+      expect(VenezuelaGeo.municipiosDe('Distrito Capital'), ['Libertador']);
+      expect(VenezuelaGeo.municipiosDe('Miranda'), contains('Chacao'));
+      expect(VenezuelaGeo.municipiosDe('Miranda'), contains('Baruta'));
+      expect(VenezuelaGeo.esUbicacionValida('Miranda', 'Chacao'), isTrue);
+      expect(VenezuelaGeo.esUbicacionValida('Miranda', 'Maracaibo'), isFalse);
+      expect(VenezuelaGeo.esUbicacionValida(null, 'Chacao'), isFalse);
+      expect(VenezuelaGeo.municipiosDe('Narnia'), isEmpty);
+    });
+  });
+
   group('Estrategia de precios', () {
     test('aplica recargo del 15 % cuando inicia en viernes', () {
       final viernes = DateTime(2026, 6, 12); // viernes
@@ -44,15 +81,14 @@ void main() {
     });
   });
 
-  group('Flujo de estados de reserva', () {
-    test('sigue el orden Solicitado → Aceptado → Pagado → Disfrutado', () {
+  group('Flujo de reserva directa', () {
+    test('sigue el orden Pendiente de Pago → Pagado → Disfrutado', () {
       expect(EstadosReserva.flujo, [
-        'Solicitado',
-        'Aceptado',
+        'Pendiente de Pago',
         'Pagado',
         'Disfrutado',
       ]);
-      expect(EstadosReserva.indiceDe('Pagado'), 2);
+      expect(EstadosReserva.indiceDe('Pagado'), 1);
       expect(EstadosReserva.indiceDe('desconocido'), 0);
     });
   });
