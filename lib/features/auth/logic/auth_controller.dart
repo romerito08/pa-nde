@@ -153,7 +153,7 @@ class AuthController extends ChangeNotifier {
   String get rutaSegunRol {
     if (esAdministrador) return '/admin';
     if (esAliado) return '/aliado';
-    return '/explorar';
+    return '/inicio';
   }
 
   void _iniciarCarga() {

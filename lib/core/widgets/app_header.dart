@@ -21,28 +21,37 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   /// Enlaces de navegación según el rol del usuario.
   static List<({String titulo, String ruta})> enlacesPara(Usuario? usuario) {
-    final enlaces = <({String titulo, String ruta})>[
-      (titulo: 'Inicio', ruta: '/'),
-      (titulo: 'Explorar', ruta: '/explorar'),
-    ];
-    if (usuario == null || usuario.rol == RolesUsuario.explorador) {
-      enlaces.add((titulo: 'Mis Reservas', ruta: '/mis-reservas'));
-    }
     if (usuario?.esAliado ?? false) {
-      enlaces.addAll([
+      return [
+        (titulo: 'Inicio', ruta: '/'),
         (titulo: 'Dashboard', ruta: '/aliado'),
         (titulo: 'Mis Servicios', ruta: '/aliado/servicios'),
         (titulo: 'Cotizaciones', ruta: '/aliado/cotizaciones'),
         (titulo: 'Reservas', ruta: '/aliado/reservas'),
-      ]);
+      ];
     }
     if (usuario?.esAdministrador ?? false) {
-      enlaces.add((titulo: 'Panel Admin', ruta: '/admin'));
+      return [
+        (titulo: 'Inicio', ruta: '/'),
+        (titulo: 'Panel Admin', ruta: '/admin'),
+      ];
     }
     if (usuario != null) {
-      enlaces.add((titulo: 'Mi Perfil', ruta: '/perfil'));
+      // Explorador autenticado
+      return [
+        (titulo: 'Inicio', ruta: '/inicio'),
+        (titulo: 'Alojamientos', ruta: '/alojamientos'),
+        (titulo: 'Experiencias', ruta: '/experiencias'),
+        (titulo: 'Destinos', ruta: '/destinos'),
+        (titulo: 'Favoritos', ruta: '/favoritos'),
+        (titulo: 'Reservas', ruta: '/mis-reservas'),
+      ];
     }
-    return enlaces;
+    // Sin autenticar
+    return [
+      (titulo: 'Inicio', ruta: '/'),
+      (titulo: 'Explorar', ruta: '/explorar'),
+    ];
   }
 
   @override

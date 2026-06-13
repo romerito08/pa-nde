@@ -16,11 +16,15 @@ class AppDrawer extends StatelessWidget {
   static const Map<String, IconData> _iconos = {
     'Inicio': Icons.home_outlined,
     'Explorar': Icons.travel_explore_outlined,
+    'Alojamientos': Icons.hotel_outlined,
+    'Experiencias': Icons.hiking_outlined,
+    'Destinos': Icons.map_outlined,
+    'Favoritos': Icons.favorite_outline,
+    'Reservas': Icons.event_available_outlined,
     'Mis Reservas': Icons.book_online_outlined,
     'Dashboard': Icons.dashboard_outlined,
     'Mis Servicios': Icons.hotel_outlined,
     'Cotizaciones': Icons.request_quote_outlined,
-    'Reservas': Icons.event_available_outlined,
     'Panel Admin': Icons.insights_outlined,
     'Mi Perfil': Icons.manage_accounts_outlined,
   };

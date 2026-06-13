@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/data/venezuela_geo.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
-import '../../../core/widgets/selector_geografico.dart';
+import '../../../core/widgets/barra_buscadora.dart';
 import '../logic/catalog_controller.dart';
 import 'widgets/servicio_card.dart';
 
@@ -23,58 +23,54 @@ class ExplorarScreen extends StatefulWidget {
 }
 
 class _ExplorarScreenState extends State<ExplorarScreen> {
-  final _presupuestoController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-    // Repone el presupuesto cuando se regresa con filtros activos.
-    final catalogo = context.read<CatalogController>();
-    _presupuestoController.text = catalogo.presupuestoMaximo == null
-        ? ''
-        : catalogo.presupuestoMaximo!.toStringAsFixed(0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final catalogo = context.read<CatalogController>();
+      if (catalogo.resultados.isEmpty && !catalogo.cargando) {
+        catalogo.buscar();
+      }
+    });
   }
 
-  @override
-  void dispose() {
-    _presupuestoController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _seleccionarFecha() async {
+  void _buscar(String texto) {
+    final consulta = texto.trim().toLowerCase();
     final catalogo = context.read<CatalogController>();
-    final hoy = DateTime.now();
-    final seleccionada = await showDatePicker(
-      context: context,
-      initialDate: catalogo.fecha ?? hoy,
-      firstDate: hoy,
-      lastDate: hoy.add(const Duration(days: 365)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.amarillo,
-            onPrimary: Colors.black,
-            surface: AppColors.verde,
-            onSurface: AppColors.blanco,
-          ),
-        ),
-        child: child!,
-      ),
-    );
-    if (seleccionada != null && mounted) {
-      context.read<CatalogController>().actualizarFecha(seleccionada);
+
+    if (consulta.isNotEmpty) {
+      String? estadoEncontrado;
+      String? municipioEncontrado;
+      String? estadoDelMunicipio;
+
+      for (final estado in VenezuelaGeo.estados) {
+        if (estado.toLowerCase().contains(consulta)) {
+          estadoEncontrado = estado;
+          break;
+        }
+      }
+      if (estadoEncontrado == null) {
+        busqueda:
+        for (final estado in VenezuelaGeo.estados) {
+          for (final municipio in VenezuelaGeo.municipiosDe(estado)) {
+            if (municipio.toLowerCase().contains(consulta)) {
+              municipioEncontrado = municipio;
+              estadoDelMunicipio = estado;
+              break busqueda;
+            }
+          }
+        }
+      }
+
+      if (estadoEncontrado != null) {
+        catalogo.actualizarUbicacion(estadoEncontrado, null);
+      } else if (municipioEncontrado != null) {
+        catalogo.actualizarUbicacion(estadoDelMunicipio, municipioEncontrado);
+      } else {
+        catalogo.limpiarFiltros();
+      }
     }
-  }
-
-  void _buscar() {
-    final catalogo = context.read<CatalogController>();
-    catalogo.actualizarPresupuesto(_presupuestoController.text);
     catalogo.buscar();
-  }
-
-  void _limpiar() {
-    _presupuestoController.clear();
-    context.read<CatalogController>().limpiarFiltros();
   }
 
   @override
@@ -93,6 +89,7 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
                 if (!esMovil)
                   const AppHeader(rutaActual: '/explorar', esMovil: false),
                 _hero(esMovil),
+                _buscador(esMovil),
                 Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1100),
@@ -102,7 +99,6 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _barraFiltros(esMovil),
                           _bannerAdvertencia(),
                           const SizedBox(height: 24),
                           _cuadricula(constraints.maxWidth, esMovil),
@@ -136,38 +132,17 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          // Escala el bloque en viewports diminutos (primer frame de Flutter
-          // Web) para que el hero de altura fija nunca desborde.
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "¿Pa'onde quieres ir?",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.blanco,
-                    fontSize: esMovil ? 28 : 40,
-                    fontWeight: FontWeight.w700,
-                    shadows: const [
-                      Shadow(blurRadius: 10, color: Colors.black87)
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Turismo low-cost y sostenible por toda Venezuela',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.blanco,
-                    fontSize: esMovil ? 14 : 18,
-                    shadows: const [
-                      Shadow(blurRadius: 8, color: Colors.black87)
-                    ],
-                  ),
-                ),
-              ],
+            child: Text(
+              'Turismo low-cost y sostenible por toda Venezuela',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.blanco,
+                fontSize: esMovil ? 18 : 26,
+                fontWeight: FontWeight.w600,
+                shadows: const [Shadow(blurRadius: 8, color: Colors.black87)],
+              ),
             ),
           ),
         ),
@@ -175,108 +150,27 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
     );
   }
 
-  Widget _barraFiltros(bool esMovil) {
-    final catalogo = context.watch<CatalogController>();
-    final formatoFecha = DateFormat('dd/MM/yyyy');
-
-    // Dropdowns estandarizados de Estado y Municipio (nunca texto libre).
-    final campoUbicacion = SelectorGeografico(
-      estado: catalogo.estado,
-      municipio: catalogo.municipio,
-      permitirTodos: true,
-      enFila: !esMovil,
-      onChanged: (estado, municipio) => context
-          .read<CatalogController>()
-          .actualizarUbicacion(estado, municipio),
-    );
-
-    final campoFecha = InkWell(
-      onTap: _seleccionarFecha,
-      borderRadius: BorderRadius.circular(10),
-      child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Fecha',
-          prefixIcon: Icon(Icons.calendar_today_outlined,
-              color: AppColors.verdeClaro, size: 20),
-        ),
-        child: Text(
-          catalogo.fecha == null
-              ? 'Cualquier fecha'
-              : formatoFecha.format(catalogo.fecha!),
-          style: TextStyle(
-            color: catalogo.fecha == null
-                ? AppColors.verdeClaro
-                : AppColors.blanco,
-            fontSize: 14,
+  Widget _buscador(bool esMovil) {
+    return Container(
+      color: AppColors.verdeOscuro,
+      padding:
+          EdgeInsets.symmetric(horizontal: esMovil ? 20 : 48, vertical: 24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            children: [
+              const Text(
+                "¿Pa'onde quieres ir?",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.blanco, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              BarraBuscadora(onBuscar: _buscar),
+            ],
           ),
         ),
       ),
-    );
-
-    final campoPresupuesto = TextField(
-      controller: _presupuestoController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: const TextStyle(color: AppColors.blanco),
-      onSubmitted: (_) => _buscar(),
-      decoration: const InputDecoration(
-        labelText: 'Presupuesto máx. (USD)',
-        prefixIcon: Icon(Icons.attach_money_outlined,
-            color: AppColors.verdeClaro, size: 20),
-      ),
-    );
-
-    final botones = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ElevatedButton.icon(
-          onPressed: _buscar,
-          icon: const Icon(Icons.search, size: 18),
-          label: const Text('Buscar'),
-        ),
-        const SizedBox(width: 10),
-        OutlinedButton.icon(
-          onPressed: _limpiar,
-          icon: const Icon(Icons.filter_alt_off_outlined, size: 18),
-          label: const Text('Limpiar Filtros'),
-        ),
-      ],
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.verde,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: esMovil
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                campoUbicacion,
-                const SizedBox(height: 12),
-                campoFecha,
-                const SizedBox(height: 12),
-                campoPresupuesto,
-                const SizedBox(height: 16),
-                botones,
-              ],
-            )
-          : Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(flex: 5, child: campoUbicacion),
-                    const SizedBox(width: 12),
-                    Expanded(flex: 2, child: campoFecha),
-                    const SizedBox(width: 12),
-                    Expanded(flex: 2, child: campoPresupuesto),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                botones,
-              ],
-            ),
     );
   }
 
@@ -358,7 +252,8 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: _limpiar,
+                onPressed: () =>
+                    context.read<CatalogController>().limpiarFiltros(),
                 child: const Text('Limpiar filtros y ver todo el catálogo'),
               ),
             ],

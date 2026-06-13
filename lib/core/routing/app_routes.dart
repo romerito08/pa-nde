@@ -8,6 +8,10 @@ import '../../features/bookings/ui/checkout_screen.dart';
 import '../../features/bookings/ui/mis_reservas_screen.dart';
 import '../../features/catalog/ui/detalle_servicio_screen.dart';
 import '../../features/catalog/ui/explorar_screen.dart';
+import '../../features/explorador/ui/destinos_screen.dart';
+import '../../features/explorador/ui/explorador_inicio_screen.dart';
+import '../../features/explorador/ui/explorar_categoria_screen.dart';
+import '../../features/favoritos/ui/favoritos_screen.dart';
 import '../../features/landing/ui/landing_screen.dart';
 import '../../features/partner/ui/mis_servicios_screen.dart';
 import '../../features/partner/ui/partner_dashboard_screen.dart';
@@ -24,6 +28,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const String landing = '/';
+  static const String exploradorInicio = '/inicio';
   static const String explorar = '/explorar';
   static const String login = '/login';
   static const String registro = '/registro';
@@ -38,6 +43,10 @@ class AppRoutes {
   static const String aliadoCotizaciones = '/aliado/cotizaciones';
   static const String aliadoReservas = '/aliado/reservas';
   static const String adminDashboard = '/admin';
+  static const String alojamientos = '/alojamientos';
+  static const String experiencias = '/experiencias';
+  static const String destinos = '/destinos';
+  static const String favoritos = '/favoritos';
 
   /// Generador único de rutas: resuelve también las rutas con argumentos
   /// (detalle de servicio, checkout y edición de servicio).
@@ -45,6 +54,8 @@ class AppRoutes {
     switch (settings.name) {
       case landing:
         return _ruta(const LandingScreen(), settings);
+      case exploradorInicio:
+        return _ruta(const ExploradorInicioScreen(), settings);
       case explorar:
         return _ruta(const ExplorarScreen(), settings);
       case login:
@@ -67,6 +78,22 @@ class AppRoutes {
         return _ruta(const PartnerReservasScreen(), settings);
       case adminDashboard:
         return _ruta(const AdminDashboardScreen(), settings);
+      case alojamientos:
+        return _ruta(
+          const ExplorarCategoriaScreen(
+              categoria: CategoriaExploracion.alojamientos),
+          settings,
+        );
+      case experiencias:
+        return _ruta(
+          const ExplorarCategoriaScreen(
+              categoria: CategoriaExploracion.experiencias),
+          settings,
+        );
+      case destinos:
+        return _ruta(const DestinosScreen(), settings);
+      case favoritos:
+        return _ruta(const FavoritosScreen(), settings);
 
       case detalleServicio:
         final servicioId = settings.arguments;

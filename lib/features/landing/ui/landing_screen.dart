@@ -6,18 +6,15 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../core/widgets/barra_buscadora.dart';
 import '../../../models/servicio.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../../catalog/logic/catalog_controller.dart';
 import '../../catalog/ui/widgets/servicio_card.dart';
 
-/// Landing Page principal, fiel al prototipo de Figma:
-/// hero a sangre completa con el wordmark y los botones de sesión arriba a
-/// la derecha, "¿Qué te ofrecemos?" (3 filas), "Descubre tu lugar en
-/// paonde" con el toggle Explorador/Aliado, buscador central, "Descubre
-/// Venezuela", "Servicios destacados" (alojamientos en grid y experiencias
-/// horizontales con tarjetas blancas) y el footer con "Sé un Aliado" —
-/// único punto de entrada al registro de Aliados.
+/// Landing Page de marketing: presentación de Pa'onde para usuarios no
+/// autenticados. Hero con wordmark, secciones de propuesta de valor,
+/// buscador, destinos y servicios destacados del catálogo.
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
@@ -26,9 +23,6 @@ class LandingScreen extends StatefulWidget {
 }
 
 class _LandingScreenState extends State<LandingScreen> {
-  final _buscadorController = TextEditingController();
-
-  /// Toggle de la sección "Descubre tu lugar": 0 = Explorador, 1 = Aliado.
   int _vistaSeleccionada = 0;
 
   static const _ofertas = [
@@ -106,17 +100,8 @@ class _LandingScreenState extends State<LandingScreen> {
     ),
   ];
 
-  @override
-  void dispose() {
-    _buscadorController.dispose();
-    super.dispose();
-  }
-
-  /// El buscador de la Landing intenta resolver el texto contra la
-  /// estructura geográfica oficial (estado o municipio); si hay match deja
-  /// el filtro aplicado y siempre navega al catálogo.
-  void _buscarDesdeLanding() {
-    final consulta = _buscadorController.text.trim().toLowerCase();
+  void _buscarDesdeLanding(String texto) {
+    final consulta = texto.trim().toLowerCase();
     final catalogo = context.read<CatalogController>();
 
     if (consulta.isNotEmpty) {
@@ -210,7 +195,6 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // ---------------------------------------------------------------- HERO
   Widget _hero(bool esMovil) {
     final auth = context.watch<AuthController>();
     return Stack(
@@ -224,10 +208,6 @@ class _LandingScreenState extends State<LandingScreen> {
           height: esMovil ? 300 : 420,
           color: Colors.black.withValues(alpha: 0.25),
         ),
-        // Wordmark centrado + eslogan, como en el prototipo. El FittedBox
-        // escala el bloque hacia abajo en cualquier viewport (incluido el
-        // primer frame diminuto de Flutter Web), evitando overflows que
-        // congelan el árbol de render con pantalla negra.
         Positioned.fill(
           child: Center(
             child: FittedBox(
@@ -239,7 +219,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       width: esMovil ? 220 : 360, fit: BoxFit.contain),
                   const SizedBox(height: 10),
                   Text(
-                    'Pa\'onde quieras te llevamos',
+                    "Pa'onde quieras te llevamos",
                     style: TextStyle(
                       color: AppColors.amarillo,
                       fontSize: esMovil ? 14 : 17,
@@ -254,7 +234,6 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
           ),
         ),
-        // Botones de sesión arriba a la derecha.
         Positioned(
           top: 16,
           right: esMovil ? 12 : 28,
@@ -279,9 +258,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.of(context)
-                          .pushNamed(auth.rutaSegunRol == '/'
-                              ? '/explorar'
-                              : auth.rutaSegunRol),
+                          .pushNamed(auth.rutaSegunRol),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(0, 38),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -330,7 +307,6 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // ------------------------------------------- ¿QUÉ TE OFRECEMOS? (3 filas)
   Widget _seccionQueTeOfrecemos(bool esMovil) {
     return Column(
       children: [
@@ -393,7 +369,6 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // ----------------------- DESCUBRE TU LUGAR (toggle Explorador/Aliado)
   Widget _seccionDescubreTuLugar(bool esMovil) {
     final pilares =
         _vistaSeleccionada == 0 ? _pilaresExplorador : _pilaresAliado;
@@ -415,8 +390,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.blanco, width: 1.6),
                   ),
-                  child:
-                      Icon(pilar.icono, size: 24, color: AppColors.blanco),
+                  child: Icon(pilar.icono, size: 24, color: AppColors.blanco),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -446,7 +420,6 @@ class _LandingScreenState extends State<LandingScreen> {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 18),
-        // Toggle segmentado Explorador / Aliado del prototipo.
         Center(
           child: Container(
             padding: const EdgeInsets.all(3),
@@ -474,7 +447,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 ],
               )
             : SizedBox(
-                height: 230, // 👈 SOLUCIÓN: Alto delimitado para evitar herencia infinita del scroll
+                height: 230,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -520,7 +493,6 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // ------------------------------- TU PRÓXIMA AVENTURA + BUSCADOR CENTRAL
   Widget _seccionAventura(bool esMovil) {
     return Column(
       children: [
@@ -535,7 +507,7 @@ class _LandingScreenState extends State<LandingScreen> {
         ),
         const SizedBox(height: 24),
         const Text(
-          '¿Pa\'onde quieres ir?',
+          "¿Pa'onde quieres ir?",
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.blanco, fontSize: 16),
         ),
@@ -543,72 +515,16 @@ class _LandingScreenState extends State<LandingScreen> {
         Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 40,
-                    child: TextField(
-                      controller: _buscadorController,
-                      onSubmitted: (_) => _buscarDesdeLanding(),
-                      style: const TextStyle(
-                          color: Colors.black87, fontSize: 13),
-                      cursorColor: Colors.black54,
-                      decoration: InputDecoration(
-                        hintText: 'Escribe un destino, experiencia o servicio...',
-                        hintStyle: const TextStyle(
-                            color: Colors.black38, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search,
-                            color: Colors.black38, size: 18),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: AppColors.amarillo),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: ElevatedButton(
-                    onPressed: _buscarDesdeLanding,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black54,
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(40, 40),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Icon(Icons.tune, size: 18),
-                  ),
-                ),
-              ],
-            ),
+            child: BarraBuscadora(onBuscar: _buscarDesdeLanding),
           ),
         ),
       ],
     );
   }
 
-  // ------------------------------------------------- DESCUBRE VENEZUELA
   Widget _seccionDescubreVenezuela(bool esMovil) {
     final catalogo = context.watch<CatalogController>();
 
-    // Destinos reales derivados del catálogo (un servicio representativo por
-    // estado); si aún no hay suficientes, se completan con destinos curados.
     final imagenPorEstado = <String, String>{};
     for (final servicio in catalogo.resultados) {
       if (servicio.estado.isEmpty) continue;
@@ -642,7 +558,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       destino.value,
                       fit: BoxFit.cover,
                       errorBuilder: (context, _, _) =>
-                          Container(color: const Color(0xFFD9D9D9)),
+                          const ColoredBox(color: Color(0xFFD9D9D9)),
                     ),
                   Container(color: Colors.black.withValues(alpha: 0.25)),
                   Center(
@@ -652,7 +568,9 @@ class _LandingScreenState extends State<LandingScreen> {
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        shadows: [Shadow(blurRadius: 6, color: Colors.black54)],
+                        shadows: [
+                          Shadow(blurRadius: 6, color: Colors.black54)
+                        ],
                       ),
                     ),
                   ),
@@ -691,7 +609,6 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // --------------------------------------------- SERVICIOS DESTACADOS
   Widget _seccionServiciosDestacados(bool esMovil, double anchoPantalla) {
     final catalogo = context.watch<CatalogController>();
 
@@ -776,15 +693,15 @@ class _LandingScreenState extends State<LandingScreen> {
           Column(
             children: experiencias
                 .map(
-                  (experiencia) => Padding(
+                  (exp) => Padding(
                     padding: const EdgeInsets.only(bottom: 14),
                     child: SizedBox(
                       height: 170,
                       child: ServicioCard(
-                        servicio: experiencia,
+                        servicio: exp,
                         horizontal: true,
                         alReservar: () => Navigator.of(context)
-                            .pushNamed('/servicio', arguments: experiencia.id),
+                            .pushNamed('/servicio', arguments: exp.id),
                       ),
                     ),
                   ),
