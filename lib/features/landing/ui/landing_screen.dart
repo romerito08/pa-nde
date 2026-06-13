@@ -473,14 +473,17 @@ class _LandingScreenState extends State<LandingScreen> {
                   ],
                 ],
               )
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < tarjetas.length; i++) ...[
-                    Expanded(child: tarjetas[i]),
-                    if (i < tarjetas.length - 1) const SizedBox(width: 20),
+            : SizedBox(
+                height: 230, // 👈 SOLUCIÓN: Alto delimitado para evitar herencia infinita del scroll
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < tarjetas.length; i++) ...[
+                      Expanded(child: tarjetas[i]),
+                      if (i < tarjetas.length - 1) const SizedBox(width: 20),
+                    ],
                   ],
-                ],
+                ),
               ),
         if (_vistaSeleccionada == 1) ...[
           const SizedBox(height: 16),
