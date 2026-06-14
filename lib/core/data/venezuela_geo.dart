@@ -1,6 +1,7 @@
 /// Estructura de datos estandarizada de la división político-territorial de
-/// Venezuela: 24 entidades federales con sus municipios. Es la única fuente
-/// permitida para los campos "Estado" y "Municipio" en todo el sistema
+/// Venezuela: 23 estados + Distrito Capital + Dependencias Federales (25
+/// entidades en total) con sus municipios/territorios insulares. Es la única
+/// fuente permitida para los campos "Estado" y "Municipio" en todo el sistema
 /// (registro, publicación de servicios, filtros de búsqueda y perfil).
 class VenezuelaGeo {
   VenezuelaGeo._();
@@ -53,6 +54,20 @@ class VenezuelaGeo {
     ],
     'Delta Amacuro': [
       'Antonio Díaz', 'Casacoima', 'Pedernales', 'Tucupita',
+    ],
+    'Dependencias Federales': [
+      'Archipiélago Las Aves de Barlovento',
+      'Archipiélago Las Aves de Sotavento',
+      'Archipiélago Los Monjes',
+      'Archipiélago Los Roques',
+      'Isla La Blanquilla',
+      'Isla La Orchila',
+      'Isla La Sola',
+      'Isla La Tortuga',
+      'Islas Los Frailes',
+      'Islas Los Hermanos',
+      'Islas Los Testigos',
+      'Islote Aves de Barlovento',
     ],
     'Distrito Capital': [
       'Libertador',

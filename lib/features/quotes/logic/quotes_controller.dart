@@ -68,6 +68,7 @@ class QuotesController extends ChangeNotifier {
           precioPropuesto: null,
           precioBase: servicio.precio,
           esExperiencia: servicio.esExperiencia,
+          cuposPorDia: servicio.cuposPorDia,
           creadoEn: DateTime.now(),
           turnoAliado: true,
           mensajeExplorador: '',
@@ -209,7 +210,10 @@ class QuotesController extends ChangeNotifier {
         estado: EstadosReserva.pendientePago,
         metodoPago: '',
       );
-      final reservaId = await _bookingRepository.crearReserva(borrador);
+      final reservaId = await _bookingRepository.crearReserva(
+        borrador,
+        cuposPorDia: cotizacion.cuposPorDia,
+      );
       await _repository.vincularReserva(
         cotizacionId: cotizacion.id,
         reservaId: reservaId,

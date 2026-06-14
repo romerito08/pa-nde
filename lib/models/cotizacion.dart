@@ -34,6 +34,7 @@ class Cotizacion {
   final double? precioPropuesto;
   final double precioBase;
   final bool esExperiencia;
+  final int cuposPorDia;
   final DateTime creadoEn;
 
   /// turnoAliado: true = aliado debe responder, false = explorador debe responder.
@@ -63,6 +64,7 @@ class Cotizacion {
     required this.precioPropuesto,
     required this.precioBase,
     required this.esExperiencia,
+    this.cuposPorDia = 1,
     required this.creadoEn,
     required this.turnoAliado,
     required this.mensajeExplorador,
@@ -112,6 +114,7 @@ class Cotizacion {
       precioPropuesto: (data['precioPropuesto'] as num?)?.toDouble(),
       precioBase: (data['precioBase'] as num?)?.toDouble() ?? 0,
       esExperiencia: data['esExperiencia'] ?? false,
+      cuposPorDia: (data['cuposPorDia'] ?? 1).toInt(),
       creadoEn: (data['creadoEn'] as Timestamp? ?? Timestamp.now()).toDate(),
       turnoAliado: data['turnoAliado'] ?? true,
       mensajeExplorador: data['mensajeExplorador'] ?? '',
@@ -138,6 +141,7 @@ class Cotizacion {
       'precioPropuesto': precioPropuesto,
       'precioBase': precioBase,
       'esExperiencia': esExperiencia,
+      'cuposPorDia': cuposPorDia,
       'creadoEn': FieldValue.serverTimestamp(),
       'turnoAliado': turnoAliado,
       'mensajeExplorador': mensajeExplorador,

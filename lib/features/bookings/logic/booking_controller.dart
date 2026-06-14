@@ -57,12 +57,30 @@ class BookingController extends ChangeNotifier {
     await _cargarOcupaciones();
   }
 
+  int _reservasPorDia(DateTime dia) {
+    final normalizado = DateTime(dia.year, dia.month, dia.day);
+    return _ocupaciones.where((o) => o.contieneDia(normalizado)).length;
+  }
+
+  /// Un día está totalmente ocupado cuando ya no quedan cupos disponibles.
   bool diaOcupado(DateTime dia) {
-    return _ocupaciones.any((o) => o.contieneDia(dia));
+    return _reservasPorDia(dia) >= servicio.cuposPorDia;
+  }
+
+  /// Cupos que quedan libres en [dia] (0 si el día está lleno).
+  int cuposDisponiblesEn(DateTime dia) {
+    final ocupados = _reservasPorDia(dia);
+    return (servicio.cuposPorDia - ocupados).clamp(0, servicio.cuposPorDia);
   }
 
   bool _rangoLibre(DateTime inicio, DateTime fin) {
-    return _ocupaciones.every((o) => !o.seSolapaCon(inicio, fin));
+    var dia = DateTime(inicio.year, inicio.month, inicio.day);
+    final limite = DateTime(fin.year, fin.month, fin.day);
+    while (dia.isBefore(limite)) {
+      if (_reservasPorDia(dia) >= servicio.cuposPorDia) return false;
+      dia = dia.add(const Duration(days: 1));
+    }
+    return true;
   }
 
   /// Selección interactiva del calendario: el primer toque fija el inicio,
@@ -172,7 +190,10 @@ class BookingController extends ChangeNotifier {
         estado: EstadosReserva.pendientePago,
         metodoPago: '',
       );
-      final reservaId = await _repository.crearReserva(borrador);
+      final reservaId = await _repository.crearReserva(
+        borrador,
+        cuposPorDia: servicio.cuposPorDia,
+      );
 
       // Refresca las ocupaciones para que el calendario refleje el bloqueo.
       await _cargarOcupaciones();

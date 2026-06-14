@@ -49,6 +49,11 @@ class Servicio {
 
   final double precio;
   final int capacidad;
+
+  /// Cupos simultáneos disponibles por día. Permite que varios grupos
+  /// reserven el mismo servicio en la misma fecha hasta agotar este límite.
+  final int cuposPorDia;
+
   final String estado;
   final String municipio;
   final String direccion;
@@ -67,6 +72,7 @@ class Servicio {
     this.incluyeTransporte = false,
     required this.precio,
     required this.capacidad,
+    this.cuposPorDia = 1,
     required this.estado,
     required this.municipio,
     required this.direccion,
@@ -104,6 +110,7 @@ class Servicio {
       incluyeTransporte: data['incluyeTransporte'] ?? false,
       precio: (data['precio'] ?? 0).toDouble(),
       capacidad: (data['capacidad'] ?? 1).toInt(),
+      cuposPorDia: (data['cuposPorDia'] ?? 1).toInt(),
       estado: data['estado'] ?? '',
       municipio: data['municipio'] ?? data['ciudad'] ?? '',
       direccion: data['direccion'] ?? '',
@@ -125,6 +132,7 @@ class Servicio {
       'incluyeTransporte': incluyeTransporte,
       'precio': precio,
       'capacidad': capacidad,
+      'cuposPorDia': cuposPorDia,
       'estado': estado,
       'municipio': municipio,
       'direccion': direccion,

@@ -37,6 +37,7 @@ class PublicacionController extends ChangeNotifier {
   // --- Paso 2: Costos ---
   final precioController = TextEditingController();
   final capacidadController = TextEditingController();
+  final cuposPorDiaController = TextEditingController();
 
   // --- Paso 3: Ubicación ---
   String? estadoSeleccionado;
@@ -52,6 +53,7 @@ class PublicacionController extends ChangeNotifier {
   PublicacionController(
       {ServicioRepository? repository, this.servicioInicial})
       : _repository = repository ?? ServicioRepository() {
+    cuposPorDiaController.text = '1';
     final inicial = servicioInicial;
     if (inicial != null) {
       nombreController.text = inicial.nombre;
@@ -62,6 +64,7 @@ class PublicacionController extends ChangeNotifier {
       imagenes.addAll(inicial.imagenes);
       precioController.text = inicial.precio.toStringAsFixed(0);
       capacidadController.text = inicial.capacidad.toString();
+      cuposPorDiaController.text = inicial.cuposPorDia.toString();
       if (VenezuelaGeo.esUbicacionValida(inicial.estado, inicial.municipio)) {
         estadoSeleccionado = inicial.estado;
         municipioSeleccionado = inicial.municipio;
@@ -207,6 +210,10 @@ class PublicacionController extends ChangeNotifier {
         if (capacidad == null || capacidad <= 0) {
           return 'Ingresa la capacidad máxima de personas.';
         }
+        final cupos = int.tryParse(cuposPorDiaController.text);
+        if (cupos == null || cupos <= 0) {
+          return 'Ingresa cuántos cupos por día ofreces (mínimo 1).';
+        }
         return null;
       case 2:
         if (!VenezuelaGeo.esUbicacionValida(
@@ -263,6 +270,7 @@ class PublicacionController extends ChangeNotifier {
         incluyeTransporte: incluyeTransporte,
         precio: double.parse(precioController.text.replaceAll(',', '.')),
         capacidad: int.parse(capacidadController.text),
+        cuposPorDia: int.parse(cuposPorDiaController.text),
         estado: estadoSeleccionado!,
         municipio: municipioSeleccionado!,
         direccion: direccionController.text.trim(),
@@ -301,6 +309,7 @@ class PublicacionController extends ChangeNotifier {
     descripcionController.dispose();
     precioController.dispose();
     capacidadController.dispose();
+    cuposPorDiaController.dispose();
     direccionController.dispose();
     super.dispose();
   }

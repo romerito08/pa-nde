@@ -172,10 +172,12 @@ class _Contenido extends StatelessWidget {
   }
 
   Widget _galeria(bool esMovil) {
-    final altura = esMovil ? 220.0 : 380.0;
-    if (servicio.imagenes.isEmpty) {
+    final imagenes = servicio.imagenes;
+    final alturaTotal = esMovil ? 260.0 : 440.0;
+
+    if (imagenes.isEmpty) {
       return Container(
-        height: altura,
+        height: alturaTotal,
         decoration: BoxDecoration(
           color: AppColors.verde,
           borderRadius: BorderRadius.circular(16),
@@ -186,33 +188,178 @@ class _Contenido extends StatelessWidget {
         ),
       );
     }
-    return SizedBox(
-      height: altura,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: servicio.imagenes.length,
-        separatorBuilder: (context, _) => const SizedBox(width: 12),
-        itemBuilder: (context, indice) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ImagenServicio(
-              url: servicio.imagenes[indice],
-              height: altura,
-              width: servicio.imagenes.length == 1
-                  ? (esMovil ? 600 : 1020)
-                  : (esMovil ? 320 : 560),
-              fit: BoxFit.cover,
-              errorBuilder: (context, _, _) => Container(
-                width: esMovil ? 320 : 560,
-                color: AppColors.verde,
-                child: const Center(
-                  child: Icon(Icons.broken_image_outlined,
-                      size: 48, color: AppColors.verdeClaro),
+
+    // 1 imagen: hero completo
+    if (imagenes.length == 1) {
+      return _tileImagen(
+        imagenes[0],
+        alturaTotal,
+        BorderRadius.circular(16),
+        0,
+        imagenes.length,
+      );
+    }
+
+    // 2 imágenes: dos columnas iguales
+    if (imagenes.length == 2) {
+      final h = alturaTotal * 0.65;
+      return SizedBox(
+        height: h,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _tileImagen(
+                imagenes[0], h,
+                const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
                 ),
+                0, imagenes.length,
               ),
             ),
-          );
-        },
+            const SizedBox(width: 8),
+            Expanded(
+              child: _tileImagen(
+                imagenes[1], h,
+                const BorderRadius.only(
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+                1, imagenes.length,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 3+ imágenes: hero izquierda + grid derecha (hasta 4 visibles en total)
+    const maxVisibles = 4;
+    final rightImages = imagenes.skip(1).take(maxVisibles - 1).toList();
+    final extras = imagenes.length - maxVisibles; // imágenes ocultas
+
+    return SizedBox(
+      height: alturaTotal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Hero principal
+          Expanded(
+            flex: 3,
+            child: _tileImagen(
+              imagenes[0], alturaTotal,
+              const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+              0, imagenes.length,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Grid derecho
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (int i = 0; i < rightImages.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _tileImagen(
+                          rightImages[i],
+                          alturaTotal / rightImages.length,
+                          _borderGrilla(i, rightImages.length),
+                          i + 1, imagenes.length,
+                        ),
+                        // Badge "+N" en la última celda si hay más imágenes
+                        if (i == rightImages.length - 1 && extras > 0)
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: _borderGrilla(i, rightImages.length),
+                              child: ColoredBox(
+                                color: Colors.black54,
+                                child: Center(
+                                  child: Text(
+                                    '+$extras',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tileImagen(
+    String url,
+    double altura,
+    BorderRadius radio,
+    int indice,
+    int total,
+  ) {
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: () => _verImagenAmpliada(context, indice),
+        child: ClipRRect(
+          borderRadius: radio,
+          child: ImagenServicio(
+            url: url,
+            height: altura,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (context, _, _) => Container(
+              color: AppColors.verde,
+              child: const Center(
+                child: Icon(Icons.broken_image_outlined,
+                    size: 40, color: AppColors.verdeClaro),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  BorderRadius _borderGrilla(int indice, int total) {
+    if (indice == 0 && total == 1) {
+      return const BorderRadius.only(
+        topRight: Radius.circular(16),
+        bottomRight: Radius.circular(16),
+      );
+    }
+    if (indice == 0) {
+      return const BorderRadius.only(topRight: Radius.circular(16));
+    }
+    if (indice == total - 1) {
+      return const BorderRadius.only(bottomRight: Radius.circular(16));
+    }
+    return BorderRadius.zero;
+  }
+
+  void _verImagenAmpliada(BuildContext context, int indiceInicial) {
+    final imagenes = servicio.imagenes;
+    showDialog<void>(
+      context: context,
+      builder: (_) => _DialogoGaleria(
+        imagenes: imagenes,
+        indiceInicial: indiceInicial,
       ),
     );
   }
@@ -373,6 +520,10 @@ class _Contenido extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const CalendarioDisponibilidad(),
+          if (reserva.fechaInicio != null) ...[
+            const SizedBox(height: 10),
+            _chipCupos(reserva),
+          ],
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -454,6 +605,46 @@ class _Contenido extends StatelessWidget {
     );
   }
 
+  Widget _chipCupos(BookingController reserva) {
+    final dia = reserva.fechaInicio!;
+    final cupos = reserva.cuposDisponiblesEn(dia);
+    final total = servicio.cuposPorDia;
+    final Color color;
+    final IconData icono;
+    if (cupos == 0) {
+      color = AppColors.error;
+      icono = Icons.event_busy_outlined;
+    } else if (cupos <= (total / 2).ceil()) {
+      color = AppColors.advertencia;
+      icono = Icons.event_available_outlined;
+    } else {
+      color = AppColors.exito;
+      icono = Icons.event_available_outlined;
+    }
+    final texto = cupos == 0
+        ? 'Sin cupos para esa fecha'
+        : cupos == 1
+            ? '1 cupo disponible'
+            : '$cupos cupos disponibles';
+
+    return Row(
+      children: [
+        Icon(icono, color: color, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          texto,
+          style: TextStyle(
+              color: color, fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+        Text(
+          ' de $total',
+          style:
+              const TextStyle(color: AppColors.verdeClaro, fontSize: 13),
+        ),
+      ],
+    );
+  }
+
   /// Flujo de reserva directa: si `calendarios` confirma disponibilidad, la
   /// reserva se crea automáticamente en "Pendiente de Pago" y la interfaz de
   /// la pasarela aparece inmediatamente después del clic en "Reservar".
@@ -474,6 +665,9 @@ class _Contenido extends StatelessWidget {
           context, mensajeError ?? 'No fue posible procesar la reserva.');
     }
   }
+
+  /// Abre el visor de imágenes en pantalla completa con navegación.
+  // (declarado en _galeria como closure)
 
   /// Alternativa a la reserva directa: crea una solicitud en la colección
   /// `cotizaciones` para que el Aliado responda con su feedback.
@@ -504,5 +698,141 @@ class _Contenido extends StatelessWidget {
           context,
           'Solicitud enviada. El aliado te responderá en "Mis Reservas → Cotizaciones".');
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Visor de galería a pantalla completa con PageView y contador
+// ---------------------------------------------------------------------------
+
+class _DialogoGaleria extends StatefulWidget {
+  final List<String> imagenes;
+  final int indiceInicial;
+
+  const _DialogoGaleria({
+    required this.imagenes,
+    required this.indiceInicial,
+  });
+
+  @override
+  State<_DialogoGaleria> createState() => _DialogoGaleriaState();
+}
+
+class _DialogoGaleriaState extends State<_DialogoGaleria> {
+  late final PageController _pagCtrl;
+  late int _actual;
+
+  @override
+  void initState() {
+    super.initState();
+    _actual = widget.indiceInicial;
+    _pagCtrl = PageController(initialPage: widget.indiceInicial);
+  }
+
+  @override
+  void dispose() {
+    _pagCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: Stack(
+        children: [
+          // Visor con PageView
+          PageView.builder(
+            controller: _pagCtrl,
+            itemCount: widget.imagenes.length,
+            onPageChanged: (i) => setState(() => _actual = i),
+            itemBuilder: (_, i) => InteractiveViewer(
+              child: Center(
+                child: ImagenServicio(
+                  url: widget.imagenes[i],
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, e, s) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: AppColors.verdeClaro,
+                    size: 64,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Botón cerrar
+          Positioned(
+            top: 16,
+            right: 16,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 30),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+
+          // Contador "2 / 5"
+          Positioned(
+            top: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_actual + 1} / ${widget.imagenes.length}',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ),
+
+          // Flechas de navegación (solo si hay más de 1 imagen)
+          if (widget.imagenes.length > 1) ...[
+            if (_actual > 0)
+              Positioned(
+                left: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: IconButton(
+                    icon: const Icon(Icons.chevron_left,
+                        color: Colors.white, size: 40),
+                    onPressed: () =>
+                        _pagCtrl.previousPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                        ),
+                  ),
+                ),
+              ),
+            if (_actual < widget.imagenes.length - 1)
+              Positioned(
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: IconButton(
+                    icon: const Icon(Icons.chevron_right,
+                        color: Colors.white, size: 40),
+                    onPressed: () =>
+                        _pagCtrl.nextPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                        ),
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
   }
 }

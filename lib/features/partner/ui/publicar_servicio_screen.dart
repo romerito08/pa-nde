@@ -361,8 +361,22 @@ class _ContenidoStepper extends StatelessWidget {
           keyboardType: TextInputType.number,
           style: const TextStyle(color: AppColors.blanco),
           decoration: const InputDecoration(
-            labelText: 'Capacidad máxima (personas)',
+            labelText: 'Capacidad máxima (personas por reserva)',
             prefixIcon: Icon(Icons.group_outlined,
+                color: AppColors.verdeClaro, size: 20),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: controlador.cuposPorDiaController,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(color: AppColors.blanco),
+          decoration: const InputDecoration(
+            labelText: 'Cupos disponibles por día',
+            helperText:
+                'Cuántas reservas simultáneas aceptas en la misma fecha.',
+            helperStyle: TextStyle(color: AppColors.verdeClaro, fontSize: 12),
+            prefixIcon: Icon(Icons.event_available_outlined,
                 color: AppColors.verdeClaro, size: 20),
           ),
         ),

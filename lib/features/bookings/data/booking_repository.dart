@@ -30,29 +30,39 @@ class BookingRepository {
     }
   }
 
-  /// Verifica contra `calendarios` que el rango solicitado esté libre antes
-  /// de permitir la reserva (RF05).
+  /// Verifica contra `calendarios` que el rango solicitado tenga cupos
+  /// disponibles en todos sus días (RF05). Un día está lleno solo cuando la
+  /// cantidad de reservas existentes iguala o supera [cuposPorDia].
   Future<bool> estaDisponible({
     required String servicioId,
     required DateTime inicio,
     required DateTime fin,
+    required int cuposPorDia,
   }) async {
     final ocupaciones = await ocupacionesDe(servicioId);
-    return ocupaciones.every((o) => !o.seSolapaCon(inicio, fin));
+    var dia = DateTime(inicio.year, inicio.month, inicio.day);
+    final limite = DateTime(fin.year, fin.month, fin.day);
+    while (dia.isBefore(limite)) {
+      final count = ocupaciones.where((o) => o.contieneDia(dia)).length;
+      if (count >= cuposPorDia) return false;
+      dia = dia.add(const Duration(days: 1));
+    }
+    return true;
   }
 
-  /// Crea la reserva en estado "Solicitado" y bloquea sus fechas en
-  /// `calendarios` dentro del mismo batch. Devuelve el id de la reserva.
-  Future<String> crearReserva(Reserva reserva) async {
+  /// Crea la reserva en estado "Pendiente de Pago" y registra la ocupación en
+  /// `calendarios` en el mismo batch atómico. Devuelve el id de la reserva.
+  Future<String> crearReserva(Reserva reserva, {required int cuposPorDia}) async {
     try {
       final disponible = await estaDisponible(
         servicioId: reserva.servicioId,
         inicio: reserva.fechaInicio,
         fin: reserva.fechaFin,
+        cuposPorDia: cuposPorDia,
       );
       if (!disponible) {
         throw const AppException(
-            'Las fechas seleccionadas acaban de ser ocupadas. Elige otras.');
+            'No quedan cupos disponibles para las fechas elegidas. Elige otras.');
       }
 
       final batch = _firestore.batch();
