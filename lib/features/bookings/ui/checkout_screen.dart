@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/feedback_helper.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../core/widgets/imagen_servicio.dart';
 import '../../../models/reserva.dart';
 import '../logic/mis_reservas_controller.dart';
 
@@ -22,17 +23,14 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  String _metodoSeleccionado = 'PayPal';
   bool _procesando = false;
-
-  static const _metodos = ['PayPal', 'Tarjeta de Crédito', 'Transferencia'];
 
   Future<void> _pagar() async {
     setState(() => _procesando = true);
 
     final resultado = await context
         .read<MisReservasController>()
-        .pagar(widget.reserva, _metodoSeleccionado);
+        .pagar(widget.reserva, 'PayPal');
 
     if (!mounted) return;
     setState(() => _procesando = false);
@@ -42,13 +40,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('✅ ¡Pago aprobado!'),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: AppColors.exito, size: 22),
+              SizedBox(width: 10),
+              Text('Pago aprobado'),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                  'Tu reserva en "${widget.reserva.servicioNombre}" quedó en estado Pagado.'),
+                  'Tu reserva en "${widget.reserva.servicioNombre}" quedó confirmada.'),
               const SizedBox(height: 12),
               Text('Método: ${resultado.metodo}',
                   style: const TextStyle(color: AppColors.verdeClaro)),
@@ -64,7 +68,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
-              child: const Text('Volver a mis reservas'),
+              child: const Text('Ver mis reservas'),
             ),
           ],
         ),
@@ -72,8 +76,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } else {
       FeedbackHelper.mostrarError(
         context,
-        resultado.mensajeError ??
-            'El pago fue rechazado. Intenta con otro método.',
+        resultado.mensajeError ?? 'El pago fue rechazado. Intenta de nuevo.',
       );
     }
   }
@@ -153,8 +156,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           if (reserva.servicioImagen.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                reserva.servicioImagen,
+              child: ImagenServicio(
+                url: reserva.servicioImagen,
                 height: 180,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -242,62 +245,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 fontSize: 20,
                 fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            initialValue: _metodoSeleccionado,
-            dropdownColor: AppColors.verde,
-            decoration: const InputDecoration(labelText: 'Método de pago'),
-            items: _metodos
-                .map((metodo) => DropdownMenuItem(
-                      value: metodo,
-                      child: Text(metodo,
-                          style: const TextStyle(color: AppColors.blanco)),
-                    ))
-                .toList(),
-            onChanged: _procesando
-                ? null
-                : (valor) {
-                    if (valor != null) {
-                      setState(() => _metodoSeleccionado = valor);
-                    }
-                  },
-          ),
-          const SizedBox(height: 24),
-          if (_metodoSeleccionado == 'PayPal') ...[
-            // Botón con la identidad visual de PayPal, como en el prototipo.
-            Container(
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD200),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Pagar con ',
-                        style: TextStyle(
-                            color: Color(0xFF003087),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15)),
-                    Text('Pay',
-                        style: TextStyle(
-                            color: Color(0xFF003087),
-                            fontWeight: FontWeight.bold,
-                            fontStyle: FontStyle.italic,
-                            fontSize: 19)),
-                    Text('Pal',
-                        style: TextStyle(
-                            color: Color(0xFF0079C1),
-                            fontWeight: FontWeight.bold,
-                            fontStyle: FontStyle.italic,
-                            fontSize: 19)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+          const SizedBox(height: 28),
           _procesando
               ? const Center(
                   child: Padding(
@@ -305,14 +253,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              : ElevatedButton.icon(
-                  onPressed: _pagar,
-                  icon: const Icon(Icons.lock_outline, size: 18),
-                  label: Text('Pagar \$${widget.reserva.total.toStringAsFixed(2)} con $_metodoSeleccionado'),
+              : GestureDetector(
+                  onTap: _pagar,
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD200),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Pagar con ',
+                              style: TextStyle(
+                                  color: Color(0xFF003087),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
+                          Text('Pay',
+                              style: TextStyle(
+                                  color: Color(0xFF003087),
+                                  fontWeight: FontWeight.bold,
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 21)),
+                          Text('Pal',
+                              style: TextStyle(
+                                  color: Color(0xFF0079C1),
+                                  fontWeight: FontWeight.bold,
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 21)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
           const SizedBox(height: 12),
           const Text(
-            'Pago simulado con fines académicos: la pasarela responde como el sandbox de PayPal.',
+            'Pago procesado a través de PayPal Sandbox. Usa las credenciales de prueba de developer.paypal.com.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.verdeClaro, fontSize: 12),
           ),

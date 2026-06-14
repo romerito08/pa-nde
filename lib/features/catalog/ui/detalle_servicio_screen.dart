@@ -7,6 +7,7 @@ import '../../../core/utils/feedback_helper.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../core/widgets/imagen_servicio.dart';
 import '../../../models/servicio.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../../bookings/logic/booking_controller.dart';
@@ -194,8 +195,8 @@ class _Contenido extends StatelessWidget {
         itemBuilder: (context, indice) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              servicio.imagenes[indice],
+            child: ImagenServicio(
+              url: servicio.imagenes[indice],
               height: altura,
               width: servicio.imagenes.length == 1
                   ? (esMovil ? 600 : 1020)
@@ -467,9 +468,6 @@ class _Contenido extends StatelessWidget {
         await context.read<BookingController>().reservarDirecto(auth.usuario);
     if (!context.mounted) return;
     if (reservaCreada != null) {
-      FeedbackHelper.mostrarExito(
-          context, 'Fechas confirmadas. Completa el pago para asegurarlas.');
-      // Disparador de pago inmediato: checkout con la reserva recién creada.
       Navigator.of(context).pushNamed('/checkout', arguments: reservaCreada);
     } else {
       FeedbackHelper.mostrarError(

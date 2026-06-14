@@ -7,6 +7,7 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/barra_buscadora.dart';
+import '../../../core/widgets/imagen_servicio.dart';
 import '../../../models/servicio.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../../catalog/logic/catalog_controller.dart';
@@ -554,8 +555,8 @@ class _LandingScreenState extends State<LandingScreen> {
                 fit: StackFit.expand,
                 children: [
                   if (destino.value.isNotEmpty)
-                    Image.network(
-                      destino.value,
+                    ImagenServicio(
+                      url: destino.value,
                       fit: BoxFit.cover,
                       errorBuilder: (context, _, _) =>
                           const ColoredBox(color: Color(0xFFD9D9D9)),
@@ -689,44 +690,22 @@ class _LandingScreenState extends State<LandingScreen> {
         const SizedBox(height: 12),
         if (experiencias.isEmpty)
           _sinServicios('Aún no hay experiencias publicadas.')
-        else if (esMovil)
-          Column(
-            children: experiencias
-                .map(
-                  (exp) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: SizedBox(
-                      height: 170,
-                      child: ServicioCard(
-                        servicio: exp,
-                        horizontal: true,
-                        alReservar: () => Navigator.of(context)
-                            .pushNamed('/servicio', arguments: exp.id),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          )
         else
-          Row(
-            children: [
-              for (var i = 0; i < experiencias.length; i++) ...[
-                Expanded(
-                  child: SizedBox(
-                    height: 190,
-                    child: ServicioCard(
-                      servicio: experiencias[i],
-                      horizontal: true,
-                      alReservar: () => Navigator.of(context).pushNamed(
-                          '/servicio',
-                          arguments: experiencias[i].id),
-                    ),
-                  ),
-                ),
-                if (i < experiencias.length - 1) const SizedBox(width: 16),
-              ],
-            ],
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columnas.clamp(1, 3),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 300 / 350,
+            ),
+            itemCount: experiencias.length,
+            itemBuilder: (context, indice) => ServicioCard(
+              servicio: experiencias[indice],
+              alReservar: () => Navigator.of(context)
+                  .pushNamed('/servicio', arguments: experiencias[indice].id),
+            ),
           ),
       ],
     );

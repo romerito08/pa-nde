@@ -7,6 +7,7 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/barra_buscadora.dart';
+import '../../../core/widgets/imagen_servicio.dart';
 import '../../catalog/logic/catalog_controller.dart';
 
 class DestinosScreen extends StatefulWidget {
@@ -17,13 +18,15 @@ class DestinosScreen extends StatefulWidget {
 }
 
 class _DestinosScreenState extends State<DestinosScreen> {
+  String _filtroEstado = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final catalogo = context.read<CatalogController>();
       if (catalogo.resultados.isEmpty && !catalogo.cargando) {
-        catalogo.buscar();
+        catalogo.buscarLocalmente();
       }
     });
   }
@@ -31,11 +34,13 @@ class _DestinosScreenState extends State<DestinosScreen> {
   void _irADestino(String estado) {
     final catalogo = context.read<CatalogController>();
     catalogo.actualizarUbicacion(estado, null);
-    catalogo.buscar();
-    Navigator.of(context).pushNamed('/explorar');
+    catalogo.buscarLocalmente();
+    Navigator.of(context).pushNamed('/alojamientos');
   }
 
-  void _buscar(String _) => Navigator.of(context).pushNamed('/explorar');
+  void _buscar(String texto) {
+    setState(() => _filtroEstado = texto.trim().toLowerCase());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +154,11 @@ class _DestinosScreenState extends State<DestinosScreen> {
       }
     }
 
-    final estados = VenezuelaGeo.estados;
+    final estados = _filtroEstado.isEmpty
+        ? VenezuelaGeo.estados
+        : VenezuelaGeo.estados
+            .where((e) => e.toLowerCase().contains(_filtroEstado))
+            .toList();
 
     int columnas = 3;
     if (anchoPantalla < 600) {
@@ -196,10 +205,10 @@ class _DestinosScreenState extends State<DestinosScreen> {
                   fit: StackFit.expand,
                   children: [
                     if (imagen.isNotEmpty)
-                      Image.network(
-                        imagen,
+                      ImagenServicio(
+                        url: imagen,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorBuilder: (_, _, _) =>
                             const ColoredBox(color: Color(0xFFD9D9D9)),
                       ),
                     Container(color: Colors.black.withValues(alpha: 0.30)),

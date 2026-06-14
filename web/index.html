@@ -18,7 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Pa'onde – turismo venezolano">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -29,18 +29,224 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>paonde_app</title>
+  <title>Pa'onde</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    PayPal JS SDK (sandbox).
+    Obtén tu client-id en: https://developer.paypal.com/dashboard/applications/sandbox
+    Reemplaza AQUI_TU_CLIENT_ID_SANDBOX con el Client ID de tu app sandbox de PayPal.
+    Para producción, cambia el client-id al de live y quita ?environment=sandbox.
+  -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AWl3uaNWkvWH67YSkzKFw7r31PHWZAcddcDyzMYFxR7lnmL7g55zyu61hp0IlzHyzG9h5ULOz7j1KtX3&currency=USD&intent=capture&locale=es_VE" data-namespace="paypal"></script>
+
+  <style>
+    #pp-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.80);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+    }
+    #pp-modal {
+      background: #1F261B;
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      width: 360px;
+      max-width: 92vw;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    #pp-modal .pp-logo {
+      margin-bottom: 6px;
+    }
+    #pp-modal .pp-logo span.p1 { color: #003087; font-weight: 800; font-size: 22px; font-style: italic; font-family: sans-serif; }
+    #pp-modal .pp-logo span.p2 { color: #009CDE; font-weight: 800; font-size: 22px; font-style: italic; font-family: sans-serif; }
+    #pp-amount {
+      color: #F2DE00;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 8px 0 20px;
+      font-family: sans-serif;
+    }
+    #pp-loading {
+      color: #5C6657;
+      font-size: 13px;
+      font-family: sans-serif;
+      margin-top: 10px;
+    }
+    #pp-cancel-btn {
+      margin-top: 16px;
+      background: transparent;
+      border: 1px solid #5C6657;
+      color: #5C6657;
+      padding: 8px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: sans-serif;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #pp-cancel-btn:hover { border-color: #F2DE00; color: #F2DE00; }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- PayPal overlay: se muestra cuando el explorador elige "Pagar con PayPal" -->
+  <div id="pp-overlay">
+    <div id="pp-modal">
+      <div class="pp-logo">
+        <span class="p1">Pay</span><span class="p2">Pal</span>
+      </div>
+      <p id="pp-amount"></p>
+      <!-- El SDK de PayPal renderiza sus botones aquí -->
+      <div id="pp-buttons"></div>
+      <div id="pp-loading">Cargando botones de PayPal…</div>
+      <button id="pp-cancel-btn" onclick="window._paondePP._doCancel()">
+        Cancelar
+      </button>
+    </div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <script>
+    /**
+     * Puente JS↔Dart para el flujo de pago con PayPal.
+     *
+     * Problema en Flutter Web (CanvasKit): el elemento flt-glass-pane de
+     * Flutter se sitúa encima de cualquier HTML normal, bloqueando clics y
+     * ocultando visualmente el overlay.
+     *
+     * Solución:
+     *  1. Mover el overlay al final de <body> (después de los elementos de
+     *     Flutter) justo antes de mostrarlo → gana en orden DOM.
+     *  2. Asignar z-index máximo al overlay.
+     *  3. Desactivar pointer-events en flt-glass-pane mientras el overlay
+     *     está visible; restaurarlo al cerrar.
+     */
+    window._paondePP = {
+      _resolve: null,
+
+      // Desactiva el glass pane de Flutter y eleva el overlay al frente.
+      _mostrar: function () {
+        const overlay = document.getElementById('pp-overlay');
+        // Mover al final de body para quedar después de los elementos Flutter.
+        document.body.appendChild(overlay);
+        overlay.style.zIndex = '2147483647';
+        overlay.style.display = 'flex';
+        // Desactivar captura de eventos de Flutter durante el pago.
+        const gp = document.querySelector('flt-glass-pane');
+        if (gp) gp.style.pointerEvents = 'none';
+      },
+
+      // Oculta el overlay y restaura Flutter.
+      _ocultar: function () {
+        document.getElementById('pp-overlay').style.display = 'none';
+        const gp = document.querySelector('flt-glass-pane');
+        if (gp) gp.style.pointerEvents = '';
+      },
+
+      /**
+       * Lanza el flujo de PayPal. Devuelve una Promise que se resuelve con
+       * { ok: true, id: '<captureId>' } al aprobar, o { ok: false, msg: '...' }
+       * al cancelar o recibir error.
+       */
+      launch: function (amount, refId) {
+        const self = this;
+        return new Promise(function (resolve) {
+          self._resolve = resolve;
+
+          const buttons  = document.getElementById('pp-buttons');
+          const loading  = document.getElementById('pp-loading');
+          const amountEl = document.getElementById('pp-amount');
+
+          buttons.innerHTML = '';
+          loading.style.display = 'block';
+          loading.textContent = 'Cargando PayPal…';
+          amountEl.textContent = 'Total: $' + Number(amount).toFixed(2) + ' USD';
+
+          self._mostrar();
+
+          paypal.Buttons({
+            style: {
+              layout : 'vertical',
+              color  : 'gold',
+              shape  : 'rect',
+              label  : 'pay',
+              height : 45,
+            },
+
+            createOrder: function (data, actions) {
+              return actions.order.create({
+                purchase_units: [{
+                  reference_id: String(refId),
+                  amount: {
+                    value        : Number(amount).toFixed(2),
+                    currency_code: 'USD',
+                  },
+                }],
+              });
+            },
+
+            onApprove: function (data, actions) {
+              loading.style.display = 'block';
+              loading.textContent = 'Procesando pago…';
+              return actions.order.capture().then(function (details) {
+                self._ocultar();
+                const captureId = details.id ||
+                  (details.purchase_units &&
+                   details.purchase_units[0] &&
+                   details.purchase_units[0].payments &&
+                   details.purchase_units[0].payments.captures &&
+                   details.purchase_units[0].payments.captures[0] &&
+                   details.purchase_units[0].payments.captures[0].id) ||
+                  data.orderID;
+                if (self._resolve) {
+                  self._resolve({ ok: true, id: captureId });
+                  self._resolve = null;
+                }
+              });
+            },
+
+            onError: function () {
+              self._ocultar();
+              if (self._resolve) {
+                self._resolve({ ok: false, msg: 'Error en PayPal. Intenta de nuevo.' });
+                self._resolve = null;
+              }
+            },
+
+            onCancel: function () {
+              self._ocultar();
+              if (self._resolve) {
+                self._resolve({ ok: false, msg: 'Pago cancelado.' });
+                self._resolve = null;
+              }
+            },
+
+          }).render('#pp-buttons').then(function () {
+            loading.style.display = 'none';
+          }).catch(function () {
+            self._ocultar();
+            if (self._resolve) {
+              self._resolve({ ok: false, msg: 'No se pudo cargar PayPal. Verifica tu conexión.' });
+              self._resolve = null;
+            }
+          });
+        });
+      },
+
+      // Llamado por el botón "Cancelar" del overlay HTML.
+      _doCancel: function () {
+        this._ocultar();
+        if (this._resolve) {
+          this._resolve({ ok: false, msg: 'Pago cancelado.' });
+          this._resolve = null;
+        }
+      },
+    };
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

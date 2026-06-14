@@ -24,6 +24,9 @@ class Usuario {
   final String estado;
   final String municipio;
   final String rol;
+  final bool bloqueado;
+  /// Correo de PayPal del aliado para recibir pagos. Vacío en Exploradores.
+  final String paypalEmail;
 
   const Usuario({
     required this.uid,
@@ -34,6 +37,8 @@ class Usuario {
     required this.estado,
     required this.municipio,
     required this.rol,
+    this.bloqueado = false,
+    this.paypalEmail = '',
   });
 
   String get nombreCompleto => '$nombre $apellido'.trim();
@@ -51,6 +56,8 @@ class Usuario {
       estado: data['estado'] ?? '',
       municipio: data['municipio'] ?? '',
       rol: data['rol'] ?? RolesUsuario.explorador,
+      bloqueado: data['bloqueado'] ?? false,
+      paypalEmail: data['paypalEmail'] ?? '',
     );
   }
 
@@ -64,18 +71,20 @@ class Usuario {
       'estado': estado,
       'municipio': municipio,
       'rol': rol,
+      'bloqueado': bloqueado,
+      'paypalEmail': paypalEmail,
       'creadoEn': FieldValue.serverTimestamp(),
     };
   }
 
-  /// Copia con los campos editables del perfil (RF de modificación de
-  /// perfil): nombre, apellido, teléfono y ubicación.
   Usuario copyWith({
     String? nombre,
     String? apellido,
     String? telefono,
     String? estado,
     String? municipio,
+    bool? bloqueado,
+    String? paypalEmail,
   }) {
     return Usuario(
       uid: uid,
@@ -86,6 +95,8 @@ class Usuario {
       estado: estado ?? this.estado,
       municipio: municipio ?? this.municipio,
       rol: rol,
+      bloqueado: bloqueado ?? this.bloqueado,
+      paypalEmail: paypalEmail ?? this.paypalEmail,
     );
   }
 }

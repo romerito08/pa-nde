@@ -65,17 +65,18 @@ class ServicioRepository {
   /// para no dejar documentos huérfanos.
   Future<void> eliminar(String servicioId) async {
     try {
-      final batch = _firestore.batch();
-
+      // Resenas: se borran antes del batch (permiso aparte del dueño del servicio).
       final resenas = await _firestore
           .collection('servicios')
           .doc(servicioId)
           .collection('resenas')
           .get();
       for (final doc in resenas.docs) {
-        batch.delete(doc.reference);
+        await doc.reference.delete();
       }
 
+      // Calendarios + servicio en un batch atómico.
+      final batch = _firestore.batch();
       final ocupaciones = await _firestore
           .collection('calendarios')
           .where('servicioId', isEqualTo: servicioId)
@@ -83,7 +84,6 @@ class ServicioRepository {
       for (final doc in ocupaciones.docs) {
         batch.delete(doc.reference);
       }
-
       batch.delete(_firestore.collection('servicios').doc(servicioId));
       await batch.commit();
     } catch (_) {

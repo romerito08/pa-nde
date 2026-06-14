@@ -11,10 +11,6 @@ import '../../../models/cotizacion.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../logic/quotes_controller.dart';
 
-/// Bandeja de entrada de cotizaciones del Aliado: lista en tiempo real las
-/// solicitudes sobre sus servicios; cada una se puede revisar y responder
-/// con un texto de feedback — aceptando, rechazando o proponiendo cambios
-/// de precio/fecha — mutando el estado del documento en `cotizaciones`.
 class AliadoCotizacionesScreen extends StatelessWidget {
   const AliadoCotizacionesScreen({super.key});
 
@@ -173,6 +169,7 @@ class _TarjetaCotizacion extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Cabecera: servicio + badge de estado
           Row(
             children: [
               Expanded(
@@ -210,22 +207,34 @@ class _TarjetaCotizacion extends StatelessWidget {
             style: const TextStyle(color: AppColors.verdeClaro, fontSize: 13),
           ),
           const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.verdeOscuro,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '"${cotizacion.mensaje}"',
-              style: const TextStyle(
-                  color: AppColors.blanco, fontSize: 14, height: 1.4),
-            ),
+
+          // Mensaje inicial del explorador
+          _burbuja(
+            label: 'Mensaje del explorador:',
+            texto: cotizacion.mensaje,
           ),
+
+          // Contra-mensaje del explorador (rondas 2+)
+          if (cotizacion.mensajeExplorador.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _burbuja(
+              label: 'Nueva respuesta del explorador:',
+              texto: cotizacion.mensajeExplorador,
+              destacado: true,
+            ),
+          ],
+
+          // Feedback ya enviado por el aliado
+          if (!cotizacion.turnoAliado || cotizacion.esFinal) ...[
+            const SizedBox(height: 10),
+            _panelFeedbackPropio(),
+          ],
+
           const SizedBox(height: 12),
-          if (cotizacion.respondida)
-            _respuestaEnviada()
+
+          // Acción
+          if (cotizacion.esFinal)
+            const SizedBox.shrink()
           else if (procesando)
             const Center(
               child: Padding(
@@ -234,13 +243,23 @@ class _TarjetaCotizacion extends StatelessWidget {
                     width: 24, height: 24, child: CircularProgressIndicator()),
               ),
             )
-          else
+          else if (cotizacion.turnoAliado)
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 onPressed: () => _abrirFormularioRespuesta(context),
                 icon: const Icon(Icons.reply_outlined, size: 16),
-                label: const Text('Revisar y responder'),
+                label: const Text('Responder'),
+              ),
+            )
+          else
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Esperando la respuesta del explorador…',
+                style: TextStyle(
+                    color: AppColors.advertencia.withValues(alpha: 0.85),
+                    fontSize: 13),
               ),
             ),
         ],
@@ -248,16 +267,53 @@ class _TarjetaCotizacion extends StatelessWidget {
     );
   }
 
-  Widget _respuestaEnviada() {
+  Widget _burbuja({
+    required String label,
+    required String texto,
+    bool destacado = false,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.colorDeCotizacion(cotizacion.estado)
-            .withValues(alpha: 0.12),
+        color: destacado
+            ? AppColors.amarillo.withValues(alpha: 0.1)
+            : AppColors.verdeOscuro,
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: AppColors.colorDeCotizacion(cotizacion.estado)),
+        border: destacado
+            ? Border.all(color: AppColors.amarillo.withValues(alpha: 0.5))
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+                color: destacado ? AppColors.amarillo : AppColors.verdeClaro,
+                fontSize: 11,
+                fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '"$texto"',
+            style: const TextStyle(
+                color: AppColors.blanco, fontSize: 14, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _panelFeedbackPropio() {
+    final color = AppColors.colorDeCotizacion(cotizacion.estado);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,8 +358,6 @@ class _TarjetaCotizacion extends StatelessWidget {
   }
 }
 
-/// Formulario de respuesta del Aliado: feedback obligatorio, precio
-/// propuesto opcional y selección del nuevo estado.
 class _ResponderCotizacionDialog extends StatefulWidget {
   final Cotizacion cotizacion;
 
@@ -321,6 +375,16 @@ class _ResponderCotizacionDialogState
   String _estadoSeleccionado = EstadosCotizacion.aceptada;
   String? _error;
   bool _enviando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-rellenar precio si ya había una propuesta anterior
+    if (widget.cotizacion.precioPropuesto != null) {
+      _precioController.text =
+          widget.cotizacion.precioPropuesto!.toStringAsFixed(2);
+    }
+  }
 
   @override
   void dispose() {
@@ -363,8 +427,15 @@ class _ResponderCotizacionDialogState
     if (!mounted) return;
     if (mensajeError == null) {
       Navigator.of(context).pop();
-      FeedbackHelper.mostrarExito(
-          context, 'Respuesta enviada: cotización "$_estadoSeleccionado".');
+      final mensaje = switch (_estadoSeleccionado) {
+        EstadosCotizacion.aceptada =>
+          'Cotización aceptada. El explorador ya puede reservar.',
+        EstadosCotizacion.rechazada =>
+          'Cotización rechazada. El explorador fue notificado.',
+        _ =>
+          'Contrapropuesta enviada. Esperando la respuesta del explorador.',
+      };
+      FeedbackHelper.mostrarExito(context, mensaje);
     } else {
       setState(() {
         _enviando = false;
@@ -385,6 +456,7 @@ class _ResponderCotizacionDialogState
           children: [
             DropdownButtonFormField<String>(
               initialValue: _estadoSeleccionado,
+              isExpanded: true,
               dropdownColor: AppColors.verde,
               decoration: const InputDecoration(labelText: 'Decisión'),
               items: EstadosCotizacion.respuestasAliado
@@ -395,6 +467,7 @@ class _ResponderCotizacionDialogState
                               ? 'Sugerir cambios (contrapropuesta)'
                               : estado,
                           style: const TextStyle(color: AppColors.blanco),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ))
                   .toList(),
@@ -426,7 +499,8 @@ class _ResponderCotizacionDialogState
                   const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(color: AppColors.blanco),
               decoration: const InputDecoration(
-                labelText: 'Precio propuesto en USD (opcional)',
+                labelText: 'Precio total en USD',
+                hintText: 'Obligatorio para contrapropuesta',
                 prefixIcon: Icon(Icons.attach_money,
                     color: AppColors.verdeClaro, size: 20),
               ),

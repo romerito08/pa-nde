@@ -25,6 +25,9 @@ class CatalogController extends ChangeNotifier {
   String? _municipio;
   DateTime? _fecha;
   double? _presupuestoMaximo;
+  String _textoBusqueda = '';
+  Set<String> _tiposAlojamiento = {};
+  bool? _conTransporte;
   bool _filtrosAplicados = false;
 
   /// Mensaje de advertencia (banner) cuando se intenta buscar sin filtros.
@@ -45,6 +48,9 @@ class CatalogController extends ChangeNotifier {
   String? get municipio => _municipio;
   DateTime? get fecha => _fecha;
   double? get presupuestoMaximo => _presupuestoMaximo;
+  String get textoBusqueda => _textoBusqueda;
+  Set<String> get tiposAlojamiento => _tiposAlojamiento;
+  bool? get conTransporte => _conTransporte;
 
   void _escucharServicios() {
     _cargando = true;
@@ -79,6 +85,27 @@ class CatalogController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Actualiza el texto de búsqueda libre (nombre, descripción o destino).
+  void actualizarTexto(String texto) {
+    _textoBusqueda = texto.trim().toLowerCase();
+    notifyListeners();
+  }
+
+  /// Aplica todos los filtros activos (incluyendo texto) de forma sincrónica,
+  /// sin llamadas async. Útil para búsqueda por texto sin verificación de
+  /// disponibilidad por fecha.
+  void buscarLocalmente() {
+    _filtrosAplicados = _estado != null ||
+        _municipio != null ||
+        (_presupuestoMaximo != null && _presupuestoMaximo! > 0) ||
+        _textoBusqueda.isNotEmpty ||
+        _tiposAlojamiento.isNotEmpty ||
+        _conTransporte == true;
+    _advertencia = null;
+    _aplicarFiltrosLocales();
+    notifyListeners();
+  }
+
   void actualizarFecha(DateTime? valor) {
     _fecha = valor;
     notifyListeners();
@@ -88,23 +115,41 @@ class CatalogController extends ChangeNotifier {
     _presupuestoMaximo = double.tryParse(valor.replaceAll(',', '.'));
   }
 
+  void actualizarTiposAlojamiento(Set<String> tipos) {
+    _tiposAlojamiento = Set.of(tipos);
+  }
+
+  void actualizarTransporte(bool? valor) {
+    _conTransporte = valor;
+  }
+
   void cerrarAdvertencia() {
     _advertencia = null;
     notifyListeners();
   }
 
-  /// Ejecuta la búsqueda. Valida que al menos un filtro tenga valor: si todos
-  /// están vacíos dispara la advertencia visual (banner en la UI) y no
-  /// consulta nada (RF02).
+  /// Ejecuta la búsqueda. Si solo hay texto aplica filtros localmente.
+  /// Si hay filtros de fecha/ubicación/presupuesto verifica disponibilidad
+  /// en Firestore. Muestra advertencia solo cuando no hay ningún criterio.
   Future<void> buscar() async {
     final sinUbicacion = _estado == null && _municipio == null;
     final sinFecha = _fecha == null;
     final sinPresupuesto = _presupuestoMaximo == null || _presupuestoMaximo! <= 0;
 
-    if (sinUbicacion && sinFecha && sinPresupuesto) {
+    final sinTipos = _tiposAlojamiento.isEmpty;
+    final sinTransporte = _conTransporte != true;
+
+    if (sinUbicacion && sinFecha && sinPresupuesto && _textoBusqueda.isEmpty &&
+        sinTipos && sinTransporte) {
       _advertencia =
           'Completa al menos un filtro (estado/municipio, fecha o presupuesto) antes de buscar.';
       notifyListeners();
+      return;
+    }
+
+    // Solo texto/tipos/transporte → filtro local sin async.
+    if (sinUbicacion && sinFecha && sinPresupuesto) {
+      buscarLocalmente();
       return;
     }
 
@@ -151,10 +196,22 @@ class CatalogController extends ChangeNotifier {
           servicio.precio <= _presupuestoMaximo!;
       final disponibleEnFecha = _fecha == null ||
           !(_ultimosOcupados?.contains(servicio.id) ?? false);
+      final coincideTexto = _textoBusqueda.isEmpty ||
+          servicio.nombre.toLowerCase().contains(_textoBusqueda) ||
+          servicio.descripcion.toLowerCase().contains(_textoBusqueda) ||
+          servicio.estado.toLowerCase().contains(_textoBusqueda) ||
+          servicio.municipio.toLowerCase().contains(_textoBusqueda);
+      final coincideTipoAlojamiento = _tiposAlojamiento.isEmpty ||
+          _tiposAlojamiento.contains(servicio.tipoAlojamiento);
+      final coincideTransporte =
+          _conTransporte != true || servicio.incluyeTransporte;
       return coincideEstado &&
           coincideMunicipio &&
           coincidePresupuesto &&
-          disponibleEnFecha;
+          disponibleEnFecha &&
+          coincideTexto &&
+          coincideTipoAlojamiento &&
+          coincideTransporte;
     }).toList();
   }
 
@@ -165,6 +222,9 @@ class CatalogController extends ChangeNotifier {
     _municipio = null;
     _fecha = null;
     _presupuestoMaximo = null;
+    _textoBusqueda = '';
+    _tiposAlojamiento = {};
+    _conTransporte = null;
     _filtrosAplicados = false;
     _advertencia = null;
     _ultimosOcupados = null;

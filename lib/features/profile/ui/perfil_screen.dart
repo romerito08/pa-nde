@@ -3,17 +3,17 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/feedback_helper.dart';
-import '../../../core/utils/validadores.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../core/widgets/campo_rif.dart';
+import '../../../core/widgets/campo_telefono.dart';
 import '../../../core/widgets/selector_geografico.dart';
 import '../../auth/logic/auth_controller.dart';
 
-/// Pantalla de Perfil con edición real (Explorador y Aliado): nombre,
-/// apellido, teléfono y ubicación estandarizada se modifican y persisten en
-/// el documento de la colección `usuarios` a través del AuthController.
-/// El correo y el rol son de solo lectura.
+/// Pantalla de Perfil con edición real (Explorador y Aliado).
+/// Los Aliados ven "Nombre de empresa" + RIF segmentado en lugar de Apellido.
+/// Ambos roles usan el selector segmentado de teléfono venezolano.
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
@@ -25,8 +25,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _apellidoController = TextEditingController();
-  final _telefonoController = TextEditingController();
+  final _paypalEmailController = TextEditingController();
 
+  String _telefonoActual = '';
+  String _rifActual = '';
   String? _estadoSeleccionado;
   String? _municipioSeleccionado;
   bool _camposCargados = false;
@@ -35,7 +37,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   void dispose() {
     _nombreController.dispose();
     _apellidoController.dispose();
-    _telefonoController.dispose();
+    _paypalEmailController.dispose();
     super.dispose();
   }
 
@@ -45,11 +47,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
     if (usuario == null) return;
     _nombreController.text = usuario.nombre;
     _apellidoController.text = usuario.apellido;
-    _telefonoController.text = usuario.telefono;
-    _estadoSeleccionado =
-        usuario.estado.isEmpty ? null : usuario.estado;
+    _telefonoActual = usuario.telefono;
+    _rifActual = usuario.apellido;
+    _estadoSeleccionado = usuario.estado.isEmpty ? null : usuario.estado;
     _municipioSeleccionado =
         usuario.municipio.isEmpty ? null : usuario.municipio;
+    _paypalEmailController.text = usuario.paypalEmail;
     _camposCargados = true;
   }
 
@@ -62,12 +65,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     final auth = context.read<AuthController>();
+    final esAliado = auth.usuario?.esAliado ?? false;
+
     final exito = await auth.actualizarPerfil(
       nombre: _nombreController.text,
-      apellido: _apellidoController.text,
-      telefono: _telefonoController.text,
+      apellido: esAliado ? _rifActual : _apellidoController.text,
+      telefono: _telefonoActual,
       estado: _estadoSeleccionado!,
       municipio: _municipioSeleccionado!,
+      paypalEmail: esAliado ? _paypalEmailController.text.trim() : null,
     );
 
     if (!mounted) return;
@@ -155,11 +161,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   Widget _formulario(AuthController auth, bool esMovil) {
     final usuario = auth.usuario!;
+    final esAliado = usuario.esAliado;
+
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Avatar + título
           Row(
             children: [
               Container(
@@ -202,7 +211,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ],
           ),
           const SizedBox(height: 28),
-          // Correo de solo lectura: es la identidad de la cuenta en Auth.
+          // Correo — solo lectura
           TextFormField(
             initialValue: usuario.correo,
             readOnly: true,
@@ -219,52 +228,70 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _nombreController,
-                  style: const TextStyle(color: AppColors.blanco),
-                  decoration: const InputDecoration(labelText: 'Nombre'),
-                  validator: (valor) => valor == null || valor.trim().isEmpty
-                      ? 'Campo obligatorio.'
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _apellidoController,
-                  style: const TextStyle(color: AppColors.blanco),
-                  decoration: const InputDecoration(labelText: 'Apellido'),
-                  validator: (valor) => valor == null || valor.trim().isEmpty
-                      ? 'Campo obligatorio.'
-                      : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _telefonoController,
-            keyboardType: TextInputType.phone,
-            style: const TextStyle(color: AppColors.blanco),
-            decoration: const InputDecoration(
-              labelText: 'Teléfono',
-              hintText: '0414-1234567',
-              prefixIcon:
-                  Icon(Icons.phone_outlined, color: AppColors.verdeClaro),
+
+          if (esAliado) ...[
+            // Aliado: Nombre de empresa
+            TextFormField(
+              controller: _nombreController,
+              style: const TextStyle(color: AppColors.blanco),
+              decoration: const InputDecoration(
+                  labelText: 'Nombre de la empresa'),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Campo obligatorio.' : null,
             ),
-            validator: (valor) {
-              if (valor == null || valor.trim().isEmpty) {
-                return 'Ingresa tu teléfono.';
-              }
-              if (!Validadores.esTelefonoValido(valor)) {
-                return 'Formato inválido. Ej.: 0414-1234567';
-              }
-              return null;
-            },
+            const SizedBox(height: 16),
+            // Aliado: RIF segmentado
+            const Text(
+              'RIF de la empresa',
+              style:
+                  TextStyle(color: AppColors.verdeClaro, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            CampoRif(
+              valorInicial: _rifActual,
+              onChanged: (v) => _rifActual = v,
+            ),
+          ] else ...[
+            // Explorador: Nombre + Apellido
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _nombreController,
+                    style: const TextStyle(color: AppColors.blanco),
+                    decoration: const InputDecoration(labelText: 'Nombre'),
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Campo obligatorio.'
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    controller: _apellidoController,
+                    style: const TextStyle(color: AppColors.blanco),
+                    decoration:
+                        const InputDecoration(labelText: 'Apellido'),
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Campo obligatorio.'
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: 16),
+          // Teléfono segmentado (ambos roles)
+          const Text(
+            'Teléfono',
+            style: TextStyle(color: AppColors.verdeClaro, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          CampoTelefono(
+            valorInicial: _telefonoActual,
+            onChanged: (v) => _telefonoActual = v,
           ),
           const SizedBox(height: 16),
           SelectorGeografico(
@@ -276,6 +303,108 @@ class _PerfilScreenState extends State<PerfilScreen> {
               _municipioSeleccionado = municipio;
             }),
           ),
+
+          // Sección PayPal — solo visible para aliados
+          if (esAliado) ...[
+            const SizedBox(height: 28),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.verde,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFF009CDE).withValues(alpha: 0.4),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Logo PayPal
+                  Row(
+                    children: [
+                      const Text(
+                        'Pay',
+                        style: TextStyle(
+                          color: Color(0xFF003087),
+                          fontWeight: FontWeight.w800,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const Text(
+                        'Pal',
+                        style: TextStyle(
+                          color: Color(0xFF009CDE),
+                          fontWeight: FontWeight.w800,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.verdeOscuro,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Cuenta de cobro',
+                          style: TextStyle(
+                              color: AppColors.verdeClaro, fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Correo de tu cuenta PayPal para recibir los pagos de tus reservas.',
+                    style: TextStyle(
+                        color: AppColors.verdeClaro, fontSize: 12, height: 1.4),
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _paypalEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: AppColors.blanco),
+                    decoration: const InputDecoration(
+                      labelText: 'Correo de PayPal',
+                      hintText: 'tunombre@ejemplo.com',
+                      prefixIcon: Icon(Icons.account_balance_wallet_outlined,
+                          color: Color(0xFF009CDE)),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return null;
+                      final emailReg = RegExp(
+                          r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+                      if (!emailReg.hasMatch(v.trim())) {
+                        return 'Ingresa un correo válido. Ej.: nombre@ejemplo.com';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (usuario.paypalEmail.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline,
+                            color: AppColors.exito, size: 15),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Cuenta vinculada: ${usuario.paypalEmail}',
+                            style: const TextStyle(
+                                color: AppColors.exito, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 28),
           auth.cargando
               ? const Center(child: CircularProgressIndicator())

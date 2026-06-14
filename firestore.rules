@@ -31,10 +31,16 @@ service cloud.firestore {
       allow create: if autenticado()
         && request.auth.uid == uid
         && request.resource.data.rol in ['Explorador', 'Aliado'];
-      // El usuario puede editar su perfil pero nunca escalar su propio rol.
-      allow update: if autenticado()
-        && request.auth.uid == uid
-        && request.resource.data.rol == resource.data.rol;
+      // El usuario puede editar su perfil pero nunca escalar su propio rol
+      // ni cambiar el campo bloqueado.
+      // El Administrador solo puede modificar el campo `bloqueado`.
+      allow update: if autenticado() && (
+        (request.auth.uid == uid
+          && request.resource.data.rol == resource.data.rol
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['bloqueado']))
+        || (esAdministrador()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bloqueado']))
+      );
       allow delete: if esAdministrador();
     }
 
@@ -45,10 +51,14 @@ service cloud.firestore {
         && request.resource.data.creadoPor == request.auth.uid;
       // El dueño edita todo; cualquier autenticado solo puede tocar los
       // agregados de reseñas (transacción del módulo de reseñas).
+      // El Administrador puede cambiar estadoPublicacion (aprobar/rechazar).
       allow update: if (esAliado() && resource.data.creadoPor == request.auth.uid)
         || (autenticado()
             && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['calificacionPromedio', 'totalResenas']));
+                .hasOnly(['calificacionPromedio', 'totalResenas']))
+        || (esAdministrador()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['estadoPublicacion', 'actualizadoEn']));
       allow delete: if (esAliado() && resource.data.creadoPor == request.auth.uid)
         || esAdministrador();
 
@@ -61,7 +71,13 @@ service cloud.firestore {
           && request.resource.data.calificacion <= 5
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0;
-        allow update, delete: if esAdministrador();
+        allow update: if esAdministrador();
+        // El administrador gestiona reseñas; el dueño del servicio puede borrarlas
+        // únicamente al eliminar su propio servicio (limpieza de subcolección).
+        allow delete: if esAdministrador()
+          || (esAliado()
+              && get(/databases/$(database)/documents/servicios/$(servicioId)).data.creadoPor
+                 == request.auth.uid);
       }
     }
 
@@ -104,13 +120,33 @@ service cloud.firestore {
         && request.resource.data.estado == 'Pendiente'
         && request.resource.data.mensaje is string
         && request.resource.data.mensaje.size() >= 10;
-      // Solo el aliado destinatario responde, mutando el estado y dejando
-      // su feedback obligatorio.
-      allow update: if autenticado()
-        && resource.data.aliadoId == request.auth.uid
-        && request.resource.data.estado in ['Aceptada', 'Rechazada', 'Contrapropuesta']
-        && request.resource.data.feedback is string
-        && request.resource.data.feedback.size() > 0;
+      // El aliado responde con feedback + estado; el explorador puede
+      // contra-responder ante una Contrapropuesta (solo toca turnoAliado y mensajeExplorador).
+      allow update: if autenticado() && (
+        (resource.data.aliadoId == request.auth.uid
+          && request.resource.data.estado in ['Aceptada', 'Rechazada', 'Contrapropuesta']
+          && request.resource.data.feedback is string
+          && request.resource.data.feedback.size() > 0)
+        || (resource.data.usuarioId == request.auth.uid
+          && resource.data.estado == 'Contrapropuesta'
+          && !resource.data.turnoAliado
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['mensajeExplorador', 'turnoAliado'])
+          && request.resource.data.mensajeExplorador is string
+          && request.resource.data.mensajeExplorador.size() > 0)
+        // Explorador vincula la Reserva creada (solo puede escribir reservaId una vez)
+        || (resource.data.usuarioId == request.auth.uid
+          && resource.data.get('reservaId', '') == ''
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['reservaId'])
+          && request.resource.data.reservaId is string
+          && request.resource.data.reservaId.size() > 0)
+        // Explorador actualiza o agrega fechas (mientras no exista reserva)
+        || (resource.data.usuarioId == request.auth.uid
+          && resource.data.get('reservaId', '') == ''
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['fechaInicio', 'fechaFin']))
+      );
       allow delete: if esAdministrador();
     }
 

@@ -114,18 +114,14 @@ class BookingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Total estimado aplicando el patrón Strategy: experiencias por persona,
-  /// alojamientos por noche con recargo de fin de semana.
   double get totalEstimado {
     if (_fechaInicio == null) return 0;
     if (servicio.esExperiencia) {
-      return estrategiaPara(_fechaInicio!)
-          .calcularTotal(servicio.precio, _huespedes);
+      return RegularPriceStrategy().calcularTotal(servicio.precio, _huespedes);
     }
     if (_fechaFin == null) return 0;
     final noches = _fechaFin!.difference(_fechaInicio!).inDays;
-    return estrategiaPara(_fechaInicio!)
-        .calcularTotal(servicio.precio, noches);
+    return RegularPriceStrategy().calcularTotal(servicio.precio, noches);
   }
 
   bool get seleccionCompleta {

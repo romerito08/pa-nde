@@ -32,7 +32,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _enviar() async {
-    // Validación de cliente antes de tocar Firebase.
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AuthController>();
@@ -42,11 +41,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (!mounted) return;
+
     if (exito) {
-      FeedbackHelper.mostrarExito(
-          context, '¡Bienvenido de vuelta, ${auth.usuario?.nombre ?? ''}!');
       Navigator.of(context)
           .pushNamedAndRemoveUntil(auth.rutaSegunRol, (route) => false);
+    } else if (auth.esBloqueado) {
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/cuenta-bloqueada', (route) => false);
     } else {
       FeedbackHelper.mostrarError(
           context, auth.error ?? 'No fue posible iniciar sesión.');

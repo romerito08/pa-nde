@@ -23,7 +23,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   static List<({String titulo, String ruta})> enlacesPara(Usuario? usuario) {
     if (usuario?.esAliado ?? false) {
       return [
-        (titulo: 'Inicio', ruta: '/'),
         (titulo: 'Dashboard', ruta: '/aliado'),
         (titulo: 'Mis Servicios', ruta: '/aliado/servicios'),
         (titulo: 'Cotizaciones', ruta: '/aliado/cotizaciones'),
@@ -32,8 +31,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     }
     if (usuario?.esAdministrador ?? false) {
       return [
-        (titulo: 'Inicio', ruta: '/'),
-        (titulo: 'Panel Admin', ruta: '/admin'),
+        (titulo: 'Métricas', ruta: '/admin/metricas'),
+        (titulo: 'Usuarios', ruta: '/admin/usuarios'),
+        (titulo: 'Publicaciones', ruta: '/admin/publicaciones'),
       ];
     }
     if (usuario != null) {
@@ -43,7 +43,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
         (titulo: 'Alojamientos', ruta: '/alojamientos'),
         (titulo: 'Experiencias', ruta: '/experiencias'),
         (titulo: 'Destinos', ruta: '/destinos'),
-        (titulo: 'Favoritos', ruta: '/favoritos'),
         (titulo: 'Reservas', ruta: '/mis-reservas'),
       ];
     }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'core/routing/app_routes.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/app_navigator.dart';
 import 'features/auth/logic/auth_controller.dart';
 import 'features/bookings/logic/mis_reservas_controller.dart';
 import 'features/catalog/logic/catalog_controller.dart';
@@ -166,6 +167,7 @@ class PaondeApp extends StatelessWidget {
         title: "Pa'onde",
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
+        navigatorKey: appNavigatorKey,
         builder: _guardiaViewport,
         initialRoute: AppRoutes.landing,
         onGenerateRoute: AppRoutes.onGenerateRoute,

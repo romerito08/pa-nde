@@ -10,12 +10,25 @@ class TiposServicio {
   static const List<String> todos = [alojamiento, experiencia];
 }
 
+/// Sub-categorías de alojamiento.
+class TiposAlojamiento {
+  TiposAlojamiento._();
+
+  static const String posada = 'Posada';
+  static const String camping = 'Camping';
+  static const String hotel = 'Hotel';
+  static const String apartamento = 'Apartamento';
+
+  static const List<String> todos = [posada, camping, hotel, apartamento];
+}
+
 /// Estados de publicación de un servicio en el catálogo.
 class EstadosPublicacion {
   EstadosPublicacion._();
 
   static const String activo = 'Activo';
   static const String pausado = 'Pausado';
+  static const String pendiente = 'Pendiente';
 }
 
 /// Documento de la colección `servicios` en Firestore. La ubicación usa la
@@ -26,6 +39,14 @@ class Servicio {
   final String nombre;
   final String descripcion;
   final String tipo;
+
+  /// Sub-categoría de alojamiento ('Posada', 'Camping', 'Hotel', 'Apartamento').
+  /// Vacío cuando el tipo es Experiencia.
+  final String tipoAlojamiento;
+
+  /// Si el servicio incluye transporte en su oferta.
+  final bool incluyeTransporte;
+
   final double precio;
   final int capacidad;
   final String estado;
@@ -42,6 +63,8 @@ class Servicio {
     required this.nombre,
     required this.descripcion,
     required this.tipo,
+    this.tipoAlojamiento = '',
+    this.incluyeTransporte = false,
     required this.precio,
     required this.capacidad,
     required this.estado,
@@ -68,7 +91,7 @@ class Servicio {
     return '$municipio, $estado';
   }
 
-  /// Primera imagen asociada o cadena vacía si el aliado no cargó URLs.
+  /// Primera imagen asociada o cadena vacía si el aliado no cargó imágenes.
   String get imagenPrincipal => imagenes.isNotEmpty ? imagenes.first : '';
 
   factory Servicio.fromFirestore(Map<String, dynamic> data, String id) {
@@ -77,16 +100,18 @@ class Servicio {
       nombre: data['nombre'] ?? '',
       descripcion: data['descripcion'] ?? '',
       tipo: data['tipo'] ?? TiposServicio.alojamiento,
+      tipoAlojamiento: data['tipoAlojamiento'] ?? '',
+      incluyeTransporte: data['incluyeTransporte'] ?? false,
       precio: (data['precio'] ?? 0).toDouble(),
       capacidad: (data['capacidad'] ?? 1).toInt(),
       estado: data['estado'] ?? '',
-      // Compatibilidad con documentos antiguos que usaban 'ciudad' libre.
       municipio: data['municipio'] ?? data['ciudad'] ?? '',
       direccion: data['direccion'] ?? '',
       imagenes: List<String>.from(data['imagenes'] ?? const []),
       calificacionPromedio: (data['calificacionPromedio'] ?? 0).toDouble(),
       totalResenas: (data['totalResenas'] ?? 0).toInt(),
-      estadoPublicacion: data['estadoPublicacion'] ?? EstadosPublicacion.activo,
+      estadoPublicacion:
+          data['estadoPublicacion'] ?? EstadosPublicacion.activo,
       creadoPor: data['creadoPor'] ?? '',
     );
   }
@@ -96,6 +121,8 @@ class Servicio {
       'nombre': nombre,
       'descripcion': descripcion,
       'tipo': tipo,
+      'tipoAlojamiento': tipoAlojamiento,
+      'incluyeTransporte': incluyeTransporte,
       'precio': precio,
       'capacidad': capacidad,
       'estado': estado,

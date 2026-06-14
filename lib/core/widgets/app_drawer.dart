@@ -25,7 +25,9 @@ class AppDrawer extends StatelessWidget {
     'Dashboard': Icons.dashboard_outlined,
     'Mis Servicios': Icons.hotel_outlined,
     'Cotizaciones': Icons.request_quote_outlined,
-    'Panel Admin': Icons.insights_outlined,
+    'Métricas': Icons.bar_chart_outlined,
+    'Usuarios': Icons.people_outlined,
+    'Publicaciones': Icons.pending_actions_outlined,
     'Mi Perfil': Icons.manage_accounts_outlined,
   };
 

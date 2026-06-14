@@ -3,22 +3,23 @@ import 'package:flutter/foundation.dart';
 import '../../../core/utils/app_exception.dart';
 import '../../../models/reserva.dart';
 import '../data/booking_repository.dart';
+import '../data/paypal_gateway.dart';
 import '../data/paypal_gateway_mock.dart';
 
 /// Controlador de "Mis Reservas" del Explorador: expone el stream de
 /// reservas, cancela reservas aún no pagadas (liberando sus fechas) y
-/// ejecuta el cobro con el mock de PayPal, cuyo callback de éxito muta el
-/// documento a "Pagado" automáticamente.
+/// ejecuta el cobro con la pasarela de PayPal (real en web, mock analítico
+/// fuera de web o para métodos distintos a PayPal).
 class MisReservasController extends ChangeNotifier {
   final BookingRepository _repository;
-  final PayPalGatewayMock _pasarela;
+  final PayPalGateway _pasarela;
 
   final Set<String> _procesando = {};
 
   MisReservasController(
-      {BookingRepository? repository, PayPalGatewayMock? pasarela})
+      {BookingRepository? repository, PayPalGateway? pasarela})
       : _repository = repository ?? BookingRepository(),
-        _pasarela = pasarela ?? PayPalGatewayMock();
+        _pasarela = pasarela ?? PayPalGateway();
 
   Stream<List<Reserva>> reservasDe(String usuarioId) =>
       _repository.reservasDeUsuario(usuarioId);

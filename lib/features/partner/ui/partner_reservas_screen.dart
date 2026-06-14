@@ -33,7 +33,8 @@ class _PartnerReservasScreenState extends State<PartnerReservasScreen> {
           reservaId: reserva.id, nuevoEstado: nuevoEstado);
       if (!mounted) return;
       FeedbackHelper.mostrarExito(
-          context, 'La reserva pasó a estado "$nuevoEstado".');
+          context,
+          'La reserva de ${reserva.usuarioNombre} fue marcada como Disfrutada.');
     } on AppException catch (e) {
       if (!mounted) return;
       FeedbackHelper.mostrarError(context, e.mensaje);

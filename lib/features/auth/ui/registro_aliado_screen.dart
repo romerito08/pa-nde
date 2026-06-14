@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/feedback_helper.dart';
 import '../../../core/utils/validadores.dart';
 import '../../../core/widgets/app_footer.dart';
+import '../../../core/widgets/campo_rif.dart';
+import '../../../core/widgets/campo_telefono.dart';
 import '../../../core/widgets/selector_geografico.dart';
 import '../../../models/usuario.dart';
 import '../logic/auth_controller.dart';
@@ -19,11 +21,11 @@ class RegistroAliadoScreen extends StatefulWidget {
 class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombreEmpresaController = TextEditingController();
-  final _rifController = TextEditingController();
-  final _telefonoController = TextEditingController();
   final _correoController = TextEditingController();
   final _contrasenaController = TextEditingController();
 
+  String _rifActual = '';
+  String _telefonoActual = '';
   String? _estadoSeleccionado;
   String? _municipioSeleccionado;
   bool _contrasenaOculta = true;
@@ -37,13 +39,13 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
     ),
     (
       icono: Icons.account_balance_wallet_outlined,
-      titulo: 'Costos e Inversion',
+      titulo: 'Costos e Inversión',
       detalle:
           'Gestiona tus tarifas detalladas y establece el cupo máximo de personas para evitar sobreventas.',
     ),
     (
       icono: Icons.location_on_outlined,
-      titulo: 'Ubicación y Galeria',
+      titulo: 'Ubicación y Galería',
       detalle:
           'Ubica tu emprendimiento en el mapa y sube las mejores fotos para atraer a los viajeros.',
     ),
@@ -72,8 +74,6 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
   @override
   void dispose() {
     _nombreEmpresaController.dispose();
-    _rifController.dispose();
-    _telefonoController.dispose();
     _correoController.dispose();
     _contrasenaController.dispose();
     super.dispose();
@@ -92,8 +92,8 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
       correo: _correoController.text,
       contrasena: _contrasenaController.text,
       nombre: _nombreEmpresaController.text,
-      apellido: _rifController.text,
-      telefono: _telefonoController.text,
+      apellido: _rifActual,
+      telefono: _telefonoActual,
       estado: _estadoSeleccionado!,
       municipio: _municipioSeleccionado!,
       rol: RolesUsuario.aliado,
@@ -101,8 +101,6 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
 
     if (!mounted) return;
     if (exito) {
-      FeedbackHelper.mostrarExito(
-          context, '¡Bienvenido, Aliado! Tu panel está listo.');
       Navigator.of(context)
           .pushNamedAndRemoveUntil(auth.rutaSegunRol, (route) => false);
     } else {
@@ -125,7 +123,16 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
                 _seccionFormulario(esMovil),
                 _seccionBeneficios(esMovil),
                 _seccionSeguridad(esMovil),
-                AppFooter(esMovil: esMovil),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1100),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: esMovil ? 20 : 48),
+                      child: AppFooter(esMovil: esMovil),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -170,12 +177,14 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
                 Text(
                   'Accede a una herramienta sin límites',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: AppColors.amarillo,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style:
+                      Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: AppColors.amarillo,
+                            fontWeight: FontWeight.w700,
+                          ),
                 ),
                 const SizedBox(height: 32),
+                // Nombre de la empresa
                 _campoTexto(
                   label: 'Nombre de la compañía',
                   controller: _nombreEmpresaController,
@@ -184,55 +193,61 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _campoTexto(
-                        label: 'RIF',
-                        controller: _rifController,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Campo obligatorio.'
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _campoTexto(
-                        label: 'Nro de Teléfono',
-                        controller: _telefonoController,
-                        tipo: TextInputType.phone,
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'Campo obligatorio.';
-                          }
-                          if (!Validadores.esTelefonoValido(v)) {
-                            return 'Ej.: 0414-1234567';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
+                // RIF segmentado (tipo J/V/E/G/C + número)
+                const Text(
+                  'RIF de la empresa',
+                  style: TextStyle(
+                      color: AppColors.verdeClaro, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                CampoRif(
+                  onChanged: (v) => _rifActual = v,
                 ),
                 const SizedBox(height: 16),
-                _campoTexto(
-                  label: 'Correo',
+                // Teléfono segmentado
+                const Text(
+                  'Teléfono',
+                  style: TextStyle(
+                      color: AppColors.verdeClaro, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                CampoTelefono(
+                  onChanged: (v) => _telefonoActual = v,
+                ),
+                const SizedBox(height: 16),
+                // Correo genérico (texto@texto.com)
+                TextFormField(
                   controller: _correoController,
-                  tipo: TextInputType.emailAddress,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: AppColors.blanco),
+                  decoration: const InputDecoration(
+                    labelText: 'Correo',
+                    hintText: 'empresa@ejemplo.com',
+                    prefixIcon: Icon(Icons.email_outlined,
+                        color: AppColors.verdeClaro),
+                  ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Campo obligatorio.';
-                    if (!Validadores.esCorreoValido(v)) return 'Correo inválido.';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Campo obligatorio.';
+                    }
+                    if (!Validadores.esCorreoValido(v.trim())) {
+                      return 'Ingresa un correo válido. Ej.: empresa@ejemplo.com';
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
+                // Contraseña segura
                 TextFormField(
                   controller: _contrasenaController,
                   obscureText: _contrasenaOculta,
                   style: const TextStyle(color: AppColors.blanco),
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
+                    helperText:
+                        'Mín. 4 letras, 1 mayúscula y 4 números',
+                    helperStyle: const TextStyle(
+                        color: AppColors.verdeClaro, fontSize: 11),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _contrasenaOculta
@@ -244,18 +259,14 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
                           () => _contrasenaOculta = !_contrasenaOculta),
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Crea una contraseña.';
-                    if (v.length < 6) return 'Mínimo 6 caracteres.';
-                    return null;
-                  },
+                  validator: Validadores.validarContrasena,
                 ),
                 const SizedBox(height: 20),
                 const Text(
                   '¿Dónde se encuentra tu alojamiento o servicio?',
                   textAlign: TextAlign.center,
-                  style:
-                      TextStyle(color: AppColors.verdeClaro, fontSize: 13),
+                  style: TextStyle(
+                      color: AppColors.verdeClaro, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 SelectorGeografico(
@@ -348,10 +359,11 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
               Text(
                 '¿Porqué estar en paonde?',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColors.blanco,
-                      fontWeight: FontWeight.w700,
-                    ),
+                style:
+                    Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          color: AppColors.blanco,
+                          fontWeight: FontWeight.w700,
+                        ),
               ),
               const SizedBox(height: 32),
               esMovil
@@ -443,10 +455,11 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
               Text(
                 'Seguridad y confianza en cada paso',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColors.blanco,
-                      fontWeight: FontWeight.w700,
-                    ),
+                style:
+                    Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          color: AppColors.blanco,
+                          fontWeight: FontWeight.w700,
+                        ),
               ),
               const SizedBox(height: 32),
               ..._seguridad.map((item) => _filaSeguridad(item)),
@@ -461,7 +474,8 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
       ({IconData icono, String titulo, String detalle}) item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         color: AppColors.verde,
         borderRadius: BorderRadius.circular(12),
@@ -475,7 +489,8 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.amarillo, width: 1.5),
             ),
-            child: Icon(item.icono, color: AppColors.amarillo, size: 24),
+            child:
+                Icon(item.icono, color: AppColors.amarillo, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -494,7 +509,9 @@ class _RegistroAliadoScreenState extends State<RegistroAliadoScreen> {
                 Text(
                   item.detalle,
                   style: const TextStyle(
-                      color: AppColors.blanco, fontSize: 13, height: 1.4),
+                      color: AppColors.blanco,
+                      fontSize: 13,
+                      height: 1.4),
                 ),
               ],
             ),

@@ -50,7 +50,11 @@ class _ExplorarCategoriaScreenState extends State<ExplorarCategoriaScreen> {
   int get _columnasBase =>
       widget.categoria == CategoriaExploracion.alojamientos ? 4 : 3;
 
-  void _buscar(String _) => Navigator.of(context).pushNamed('/explorar');
+  void _buscar(String texto) {
+    final catalogo = context.read<CatalogController>();
+    catalogo.actualizarTexto(texto.trim().toLowerCase());
+    catalogo.buscarLocalmente();
+  }
 
   @override
   Widget build(BuildContext context) {

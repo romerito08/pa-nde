@@ -7,6 +7,7 @@ import '../../../core/utils/feedback_helper.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
+import '../../../core/widgets/imagen_servicio.dart';
 import '../../../models/servicio.dart';
 import '../../auth/logic/auth_controller.dart';
 import '../data/servicio_repository.dart';
@@ -25,14 +26,18 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
   final _repositorio = ServicioRepository();
 
   Future<void> _cambiarEstado(Servicio servicio) async {
-    final nuevoEstado = servicio.estadoPublicacion == EstadosPublicacion.activo
-        ? EstadosPublicacion.pausado
-        : EstadosPublicacion.activo;
+    final pausar = servicio.estadoPublicacion == EstadosPublicacion.activo;
+    final nuevoEstado =
+        pausar ? EstadosPublicacion.pausado : EstadosPublicacion.pendiente;
     try {
       await _repositorio.cambiarEstadoPublicacion(servicio.id, nuevoEstado);
       if (!mounted) return;
       FeedbackHelper.mostrarExito(
-          context, 'El servicio ahora está "$nuevoEstado".');
+        context,
+        pausar
+            ? '"${servicio.nombre}" está pausado y ya no es visible en el catálogo.'
+            : '"${servicio.nombre}" fue enviado a revisión. El administrador lo aprobará pronto.',
+      );
     } on AppException catch (e) {
       if (!mounted) return;
       FeedbackHelper.mostrarError(context, e.mensaje);
@@ -262,6 +267,7 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
 
   Widget _tarjetaServicio(Servicio servicio) {
     final activo = servicio.estadoPublicacion == EstadosPublicacion.activo;
+    final pendiente = servicio.estadoPublicacion == EstadosPublicacion.pendiente;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -277,8 +283,8 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
                           size: 40, color: AppColors.verdeClaro),
                     ),
                   )
-                : Image.network(
-                    servicio.imagenPrincipal,
+                : ImagenServicio(
+                    url: servicio.imagenPrincipal,
                     fit: BoxFit.cover,
                     errorBuilder: (context, _, _) => Container(
                       color: AppColors.verdeOscuro,
@@ -314,8 +320,11 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color:
-                              activo ? AppColors.exito : AppColors.verdeClaro,
+                          color: activo
+                              ? AppColors.exito
+                              : pendiente
+                                  ? AppColors.advertencia
+                                  : AppColors.verdeClaro,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -323,8 +332,11 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
                       Text(
                         servicio.estadoPublicacion,
                         style: TextStyle(
-                          color:
-                              activo ? AppColors.exito : AppColors.verdeClaro,
+                          color: activo
+                              ? AppColors.exito
+                              : pendiente
+                                  ? AppColors.advertencia
+                                  : AppColors.verdeClaro,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
@@ -381,12 +393,18 @@ class _MisServiciosScreenState extends State<MisServiciosScreen> {
                         child: SizedBox(
                           height: 30,
                           child: OutlinedButton(
-                            onPressed: () => _cambiarEstado(servicio),
+                            onPressed: pendiente
+                                ? null
+                                : () => _cambiarEstado(servicio),
                             style: OutlinedButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: const Size(50, 30)),
-                            child: Text(activo ? 'Pausar' : 'Activar',
-                                style: const TextStyle(fontSize: 12)),
+                            child: Text(
+                              pendiente
+                                  ? 'En revisión'
+                                  : (activo ? 'Pausar' : 'Reenviar'),
+                              style: const TextStyle(fontSize: 12),
+                            ),
                           ),
                         ),
                       ),

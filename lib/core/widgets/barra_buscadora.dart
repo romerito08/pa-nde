@@ -15,7 +15,15 @@ import '../theme/app_colors.dart';
 class BarraBuscadora extends StatefulWidget {
   final void Function(String texto) onBuscar;
 
-  const BarraBuscadora({super.key, required this.onBuscar});
+  /// Llamado después de que el panel de filtros ejecuta "Buscar". Si es null,
+  /// el panel aplica los filtros pero no navega a ninguna pantalla.
+  final VoidCallback? onFiltrosAplicados;
+
+  const BarraBuscadora({
+    super.key,
+    required this.onBuscar,
+    this.onFiltrosAplicados,
+  });
 
   @override
   State<BarraBuscadora> createState() => _BarraBuscadoraState();
@@ -72,7 +80,10 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
             onTap: () {},
             child: Material(
               color: Colors.transparent,
-              child: _PanelFiltros(onCerrar: _cerrarPanel),
+              child: _PanelFiltros(
+                onCerrar: _cerrarPanel,
+                onNavegar: widget.onFiltrosAplicados,
+              ),
             ),
           ),
         ),
@@ -156,7 +167,8 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
 
 class _PanelFiltros extends StatefulWidget {
   final VoidCallback onCerrar;
-  const _PanelFiltros({required this.onCerrar});
+  final VoidCallback? onNavegar;
+  const _PanelFiltros({required this.onCerrar, this.onNavegar});
 
   @override
   State<_PanelFiltros> createState() => _PanelFiltrosState();
@@ -186,10 +198,16 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final p = context.read<CatalogController>().presupuestoMaximo;
-      if (p != null && p > 0) {
-        _presupuestoCtrl.text = p.toStringAsFixed(0);
+      final c = context.read<CatalogController>();
+      if (c.presupuestoMaximo != null && c.presupuestoMaximo! > 0) {
+        _presupuestoCtrl.text = c.presupuestoMaximo!.toStringAsFixed(0);
       }
+      setState(() {
+        _tipos
+          ..clear()
+          ..addAll(c.tiposAlojamiento);
+        _conTransporte = c.conTransporte == true;
+      });
     });
   }
 
@@ -204,9 +222,11 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
   void _buscar() {
     final catalogo = context.read<CatalogController>();
     catalogo.actualizarPresupuesto(_presupuestoCtrl.text);
+    catalogo.actualizarTiposAlojamiento(_tipos);
+    catalogo.actualizarTransporte(_conTransporte ? true : null);
     catalogo.buscar();
     widget.onCerrar();
-    Navigator.of(context).pushNamed('/explorar');
+    widget.onNavegar?.call();
   }
 
   void _limpiar() {

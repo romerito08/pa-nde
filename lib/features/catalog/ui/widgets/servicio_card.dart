@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/imagen_servicio.dart';
 import '../../../../models/servicio.dart';
 import '../../logic/favoritos_controller.dart';
 
@@ -9,18 +10,14 @@ import '../../logic/favoritos_controller.dart';
 /// imagen superior, fila pin + ubicación con las estrellas a la derecha,
 /// título en negro, descripción gris y fila inferior con el botón oscuro
 /// "Reservar", el corazón de favoritos y el precio "50$/noche".
-/// Soporta la variante horizontal (imagen a la izquierda) usada en la
-/// sección "Experiencias" de la Landing.
 class ServicioCard extends StatelessWidget {
   final Servicio servicio;
   final VoidCallback alReservar;
-  final bool horizontal;
 
   const ServicioCard({
     super.key,
     required this.servicio,
     required this.alReservar,
-    this.horizontal = false,
   });
 
   @override
@@ -29,21 +26,13 @@ class ServicioCard extends StatelessWidget {
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: horizontal
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(flex: 2, child: _imagen()),
-                Expanded(flex: 3, child: _contenido(context)),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(flex: 5, child: _imagen()),
-                Expanded(flex: 6, child: _contenido(context)),
-              ],
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(flex: 5, child: _imagen()),
+          Expanded(flex: 6, child: _contenido(context)),
+        ],
+      ),
     );
   }
 
@@ -59,8 +48,8 @@ class ServicioCard extends StatelessWidget {
         ),
       );
     }
-    return Image.network(
-      servicio.imagenPrincipal,
+    return ImagenServicio(
+      url: servicio.imagenPrincipal,
       fit: BoxFit.cover,
       loadingBuilder: (context, hijo, progreso) => progreso == null
           ? hijo

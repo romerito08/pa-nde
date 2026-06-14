@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/utils/app_exception.dart';
 import '../../../models/reserva.dart';
 import '../../../models/servicio.dart';
+import '../../../models/usuario.dart';
 
 /// Registro de una búsqueda hecha por los exploradores (colección
 /// `busquedas`), usado para las tendencias del panel del Administrador.
@@ -102,4 +103,75 @@ class AdminRepository {
           'No pudimos contar los usuarios registrados. Verifica tu conexión.');
     }
   }
+
+  /// Stream en tiempo real de todos los usuarios registrados.
+  Stream<List<Usuario>> todosLosUsuarios() {
+    return _firestore.collection('usuarios').snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Usuario.fromFirestore(doc.data(), doc.id))
+              .toList(),
+        );
+  }
+
+  Stream<List<Servicio>> _streamPorEstado(String estado) {
+    return _firestore
+        .collection('servicios')
+        .where('estadoPublicacion', isEqualTo: estado)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => Servicio.fromFirestore(d.data(), d.id)).toList());
+  }
+
+  Stream<List<Servicio>> serviciosPendientes() =>
+      _streamPorEstado(EstadosPublicacion.pendiente);
+
+  Stream<List<Servicio>> serviciosActivos() =>
+      _streamPorEstado(EstadosPublicacion.activo);
+
+  Stream<List<Servicio>> serviciosPausados() =>
+      _streamPorEstado(EstadosPublicacion.pausado);
+
+  Future<void> bloquearUsuario(String uid, {required bool bloqueado}) async {
+    try {
+      await _firestore
+          .collection('usuarios')
+          .doc(uid)
+          .update({'bloqueado': bloqueado});
+    } catch (_) {
+      throw const AppException(
+          'No pudimos actualizar el estado del usuario. Intenta de nuevo.');
+    }
+  }
+
+  Future<void> aprobarPublicacion(String servicioId) async {
+    try {
+      await _firestore.collection('servicios').doc(servicioId).update({
+        'estadoPublicacion': EstadosPublicacion.activo,
+        'actualizadoEn': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      throw const AppException(
+          'No pudimos aprobar la publicación. Intenta de nuevo.');
+    }
+  }
+
+  Future<void> _actualizarEstadoServicio(
+      String servicioId, String estado, String mensajeError) async {
+    try {
+      await _firestore.collection('servicios').doc(servicioId).update({
+        'estadoPublicacion': estado,
+        'actualizadoEn': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      throw AppException(mensajeError);
+    }
+  }
+
+  Future<void> rechazarPublicacion(String servicioId) =>
+      _actualizarEstadoServicio(servicioId, EstadosPublicacion.pausado,
+          'No pudimos rechazar la publicación. Intenta de nuevo.');
+
+  Future<void> suspenderPublicacion(String servicioId) =>
+      _actualizarEstadoServicio(servicioId, EstadosPublicacion.pausado,
+          'No pudimos suspender la publicación. Intenta de nuevo.');
 }

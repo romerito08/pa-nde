@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/admin/ui/admin_dashboard_screen.dart';
+import '../../features/auth/ui/cuenta_bloqueada_screen.dart';
 import '../../features/auth/ui/login_screen.dart';
 import '../../features/auth/ui/registro_aliado_screen.dart';
 import '../../features/auth/ui/registro_screen.dart';
@@ -11,7 +12,6 @@ import '../../features/catalog/ui/explorar_screen.dart';
 import '../../features/explorador/ui/destinos_screen.dart';
 import '../../features/explorador/ui/explorador_inicio_screen.dart';
 import '../../features/explorador/ui/explorar_categoria_screen.dart';
-import '../../features/favoritos/ui/favoritos_screen.dart';
 import '../../features/landing/ui/landing_screen.dart';
 import '../../features/partner/ui/mis_servicios_screen.dart';
 import '../../features/partner/ui/partner_dashboard_screen.dart';
@@ -28,6 +28,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const String landing = '/';
+  static const String cuentaBloqueada = '/cuenta-bloqueada';
   static const String exploradorInicio = '/inicio';
   static const String explorar = '/explorar';
   static const String login = '/login';
@@ -43,6 +44,9 @@ class AppRoutes {
   static const String aliadoCotizaciones = '/aliado/cotizaciones';
   static const String aliadoReservas = '/aliado/reservas';
   static const String adminDashboard = '/admin';
+  static const String adminMetricas = '/admin/metricas';
+  static const String adminUsuarios = '/admin/usuarios';
+  static const String adminPublicaciones = '/admin/publicaciones';
   static const String alojamientos = '/alojamientos';
   static const String experiencias = '/experiencias';
   static const String destinos = '/destinos';
@@ -54,6 +58,8 @@ class AppRoutes {
     switch (settings.name) {
       case landing:
         return _ruta(const LandingScreen(), settings);
+      case cuentaBloqueada:
+        return _ruta(const CuentaBloqueadaScreen(), settings);
       case exploradorInicio:
         return _ruta(const ExploradorInicioScreen(), settings);
       case explorar:
@@ -77,7 +83,12 @@ class AppRoutes {
       case aliadoReservas:
         return _ruta(const PartnerReservasScreen(), settings);
       case adminDashboard:
-        return _ruta(const AdminDashboardScreen(), settings);
+      case adminMetricas:
+        return _ruta(const AdminDashboardScreen(tabInicial: 0), settings);
+      case adminUsuarios:
+        return _ruta(const AdminDashboardScreen(tabInicial: 1), settings);
+      case adminPublicaciones:
+        return _ruta(const AdminDashboardScreen(tabInicial: 2), settings);
       case alojamientos:
         return _ruta(
           const ExplorarCategoriaScreen(
@@ -93,7 +104,7 @@ class AppRoutes {
       case destinos:
         return _ruta(const DestinosScreen(), settings);
       case favoritos:
-        return _ruta(const FavoritosScreen(), settings);
+        return _ruta(const MisReservasScreen(), settings);
 
       case detalleServicio:
         final servicioId = settings.arguments;

@@ -4,17 +4,14 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/feedback_helper.dart';
 import '../../../core/utils/validadores.dart';
+import '../../../core/widgets/campo_telefono.dart';
 import '../../../core/widgets/selector_geografico.dart';
 import '../../../models/usuario.dart';
 import '../logic/auth_controller.dart';
 
-/// Registro de Exploradores (RF01/RF15). El correo se valida con RegEx
-/// institucional: debe terminar estrictamente en '@unimet.edu.ve' o
-/// '@correo.unimet.edu.ve'; si no cumple, el envío a Firebase Authentication
-/// se bloquea (en el cliente y de nuevo en el repositorio) y se muestra un
-/// error explícito. Estado y Municipio son dropdowns estandarizados.
-/// Los Aliados NO se registran aquí: su alta es exclusiva de la página
-/// "Sé un Aliado" enlazada desde el footer de la Landing.
+/// Registro de Exploradores (RF01/RF15). Correo validado con RegEx UNIMET.
+/// Contraseña: ≥ 4 letras, 1 mayúscula y ≥ 4 números. Teléfono segmentado
+/// (código de operadora + 7 dígitos). Estado/Municipio con dropdowns.
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
 
@@ -28,8 +25,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _apellidoController = TextEditingController();
   final _correoController = TextEditingController();
   final _contrasenaController = TextEditingController();
-  final _telefonoController = TextEditingController();
 
+  String _telefonoActual = '';
   String? _estadoSeleccionado;
   String? _municipioSeleccionado;
   bool _contrasenaOculta = true;
@@ -40,12 +37,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
     _apellidoController.dispose();
     _correoController.dispose();
     _contrasenaController.dispose();
-    _telefonoController.dispose();
     super.dispose();
   }
 
   Future<void> _enviar() async {
-    // Validación de cliente (incluye la RegEx UNIMET) antes de Firebase.
     if (!_formKey.currentState!.validate()) return;
     if (_estadoSeleccionado == null || _municipioSeleccionado == null) {
       FeedbackHelper.mostrarAdvertencia(
@@ -59,7 +54,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       contrasena: _contrasenaController.text,
       nombre: _nombreController.text,
       apellido: _apellidoController.text,
-      telefono: _telefonoController.text,
+      telefono: _telefonoActual,
       estado: _estadoSeleccionado!,
       municipio: _municipioSeleccionado!,
       rol: RolesUsuario.explorador,
@@ -67,7 +62,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
     if (!mounted) return;
     if (exito) {
-      FeedbackHelper.mostrarExito(context, '¡Cuenta creada! Bienvenido a Pa\'onde.');
       Navigator.of(context)
           .pushNamedAndRemoveUntil(auth.rutaSegunRol, (route) => false);
     } else {
@@ -130,7 +124,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
     return SafeArea(
       child: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: esMovil ? 24 : 60, vertical: 40),
+          padding: EdgeInsets.symmetric(
+              horizontal: esMovil ? 24 : 60, vertical: 40),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
             child: Form(
@@ -147,19 +142,23 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   const Text(
                     'Registro de Exploradores — comunidad UNIMET',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+                    style:
+                        TextStyle(color: AppColors.verdeClaro, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _campoTexto('Nombre', _nombreController)),
+                      Expanded(
+                          child: _campoTexto('Nombre', _nombreController)),
                       const SizedBox(width: 16),
                       Expanded(
-                          child: _campoTexto('Apellido', _apellidoController)),
+                          child:
+                              _campoTexto('Apellido', _apellidoController)),
                     ],
                   ),
                   const SizedBox(height: 16),
+                  // Correo institucional UNIMET
                   TextFormField(
                     controller: _correoController,
                     keyboardType: TextInputType.emailAddress,
@@ -174,20 +173,24 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       if (valor == null || valor.trim().isEmpty) {
                         return 'Ingresa tu correo institucional.';
                       }
-                      // RegEx institucional obligatoria para Exploradores.
                       if (!Validadores.esCorreoUnimet(valor)) {
-                        return 'El correo debe terminar en @unimet.edu.ve o @correo.unimet.edu.ve';
+                        return 'Debe terminar en @unimet.edu.ve o @correo.unimet.edu.ve';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
+                  // Contraseña segura
                   TextFormField(
                     controller: _contrasenaController,
                     obscureText: _contrasenaOculta,
                     style: const TextStyle(color: AppColors.blanco),
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
+                      helperText:
+                          'Mín. 4 letras, 1 mayúscula y 4 números',
+                      helperStyle: const TextStyle(
+                          color: AppColors.verdeClaro, fontSize: 11),
                       prefixIcon: const Icon(Icons.lock_outline,
                           color: AppColors.verdeClaro),
                       suffixIcon: IconButton(
@@ -204,42 +207,25 @@ class _RegistroScreenState extends State<RegistroScreen> {
                             () => _contrasenaOculta = !_contrasenaOculta),
                       ),
                     ),
-                    validator: (valor) {
-                      if (valor == null || valor.isEmpty) {
-                        return 'Crea una contraseña.';
-                      }
-                      if (valor.length < 6) {
-                        return 'Debe tener al menos 6 caracteres.';
-                      }
-                      return null;
-                    },
+                    validator: Validadores.validarContrasena,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _telefonoController,
-                    keyboardType: TextInputType.phone,
-                    style: const TextStyle(color: AppColors.blanco),
-                    decoration: const InputDecoration(
-                      labelText: 'Teléfono',
-                      hintText: '0414-1234567',
-                      prefixIcon: Icon(Icons.phone_outlined,
-                          color: AppColors.verdeClaro),
-                    ),
-                    validator: (valor) {
-                      if (valor == null || valor.trim().isEmpty) {
-                        return 'Ingresa tu teléfono.';
-                      }
-                      if (!Validadores.esTelefonoValido(valor)) {
-                        return 'Formato inválido. Ej.: 0414-1234567';
-                      }
-                      return null;
-                    },
+                  const SizedBox(height: 20),
+                  // Teléfono segmentado
+                  const Text(
+                    'Teléfono',
+                    style: TextStyle(
+                        color: AppColors.verdeClaro, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  CampoTelefono(
+                    onChanged: (v) => _telefonoActual = v,
                   ),
                   const SizedBox(height: 24),
                   const Text(
                     '¿Dónde estás? Encuentra lo mejor de tu zona.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.verdeClaro, fontSize: 13),
+                    style: TextStyle(
+                        color: AppColors.verdeClaro, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
                   SelectorGeografico(
@@ -261,9 +247,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   const SizedBox(height: 20),
                   Center(
                     child: TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pushReplacementNamed('/login'),
-                      child: const Text('¿Ya tienes una cuenta? Inicia sesión'),
+                      onPressed: () => Navigator.of(context)
+                          .pushReplacementNamed('/login'),
+                      child: const Text(
+                          '¿Ya tienes una cuenta? Inicia sesión'),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -271,8 +258,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     child: Text(
                       '¿Quieres ofrecer tus servicios? Encuentra "Sé un Aliado" en el pie de página del inicio.',
                       textAlign: TextAlign.center,
-                      style:
-                          TextStyle(color: AppColors.verdeClaro, fontSize: 12),
+                      style: TextStyle(
+                          color: AppColors.verdeClaro, fontSize: 12),
                     ),
                   ),
                 ],
@@ -290,9 +277,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       style: const TextStyle(color: AppColors.blanco),
       decoration: InputDecoration(labelText: etiqueta),
       validator: (valor) {
-        if (valor == null || valor.trim().isEmpty) {
-          return 'Campo obligatorio.';
-        }
+        if (valor == null || valor.trim().isEmpty) return 'Campo obligatorio.';
         return null;
       },
     );

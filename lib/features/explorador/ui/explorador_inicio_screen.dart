@@ -7,6 +7,7 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_footer.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/barra_buscadora.dart';
+import '../../../core/widgets/imagen_servicio.dart';
 import '../../../models/servicio.dart';
 import '../../catalog/logic/catalog_controller.dart';
 import '../../catalog/ui/widgets/servicio_card.dart';
@@ -35,50 +36,65 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
 
   void _buscar(String texto) {
     final consulta = texto.trim().toLowerCase();
+    if (consulta.isEmpty) return;
+
     final catalogo = context.read<CatalogController>();
+    catalogo.actualizarTexto(consulta);
 
-    if (consulta.isNotEmpty) {
-      String? estadoEncontrado;
-      String? municipioEncontrado;
-      String? estadoDelMunicipio;
-
-      for (final estado in VenezuelaGeo.estados) {
-        if (estado.toLowerCase().contains(consulta)) {
-          estadoEncontrado = estado;
-          break;
-        }
-      }
-      if (estadoEncontrado == null) {
-        busqueda:
-        for (final estado in VenezuelaGeo.estados) {
-          for (final municipio in VenezuelaGeo.municipiosDe(estado)) {
-            if (municipio.toLowerCase().contains(consulta)) {
-              municipioEncontrado = municipio;
-              estadoDelMunicipio = estado;
-              break busqueda;
-            }
-          }
-        }
-      }
-
-      if (estadoEncontrado != null) {
-        catalogo.actualizarUbicacion(estadoEncontrado, null);
-        catalogo.buscar();
-      } else if (municipioEncontrado != null) {
-        catalogo.actualizarUbicacion(estadoDelMunicipio, municipioEncontrado);
-        catalogo.buscar();
-      } else {
-        catalogo.limpiarFiltros();
+    // 1. Coincide con un Estado → ir a Destinos con filtro geográfico.
+    for (final estado in VenezuelaGeo.estados) {
+      if (estado.toLowerCase().contains(consulta)) {
+        catalogo.actualizarUbicacion(estado, null);
+        catalogo.buscarLocalmente();
+        Navigator.of(context).pushNamed('/destinos');
+        return;
       }
     }
-    Navigator.of(context).pushNamed('/explorar');
+
+    // 2. Coincide con un Municipio → ir a Destinos con filtro geográfico.
+    String? municipioEncontrado;
+    String? estadoDelMunicipio;
+    busqueda:
+    for (final estado in VenezuelaGeo.estados) {
+      for (final municipio in VenezuelaGeo.municipiosDe(estado)) {
+        if (municipio.toLowerCase().contains(consulta)) {
+          municipioEncontrado = municipio;
+          estadoDelMunicipio = estado;
+          break busqueda;
+        }
+      }
+    }
+    if (municipioEncontrado != null) {
+      catalogo.actualizarUbicacion(estadoDelMunicipio, municipioEncontrado);
+      catalogo.buscarLocalmente();
+      Navigator.of(context).pushNamed('/destinos');
+      return;
+    }
+
+    // 3. Búsqueda por nombre / descripción → ir a la categoría con más resultados.
+    catalogo.buscarLocalmente();
+    _navegarPorResultados(catalogo);
+  }
+
+  void _navegarPorResultados(CatalogController catalogo) {
+    final experiencias = catalogo.resultados
+        .where((s) => s.tipo == TiposServicio.experiencia)
+        .length;
+    final alojamientos = catalogo.resultados
+        .where((s) => s.tipo == TiposServicio.alojamiento)
+        .length;
+    if (experiencias > alojamientos) {
+      Navigator.of(context).pushNamed('/experiencias');
+    } else {
+      Navigator.of(context).pushNamed('/alojamientos');
+    }
   }
 
   void _irADestino(String estado) {
     final catalogo = context.read<CatalogController>();
     catalogo.actualizarUbicacion(estado, null);
-    catalogo.buscar();
-    Navigator.of(context).pushNamed('/explorar');
+    catalogo.buscarLocalmente();
+    Navigator.of(context).pushNamed('/destinos');
   }
 
   @override
@@ -194,7 +210,11 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                 style: TextStyle(color: AppColors.blanco, fontSize: 16),
               ),
               const SizedBox(height: 12),
-              BarraBuscadora(onBuscar: _buscar),
+              BarraBuscadora(
+                onBuscar: _buscar,
+                onFiltrosAplicados: () =>
+                    _navegarPorResultados(context.read<CatalogController>()),
+              ),
             ],
           ),
         ),
@@ -235,8 +255,8 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                 fit: StackFit.expand,
                 children: [
                   if (d.value.isNotEmpty)
-                    Image.network(
-                      d.value,
+                    ImagenServicio(
+                      url: d.value,
                       fit: BoxFit.cover,
                       errorBuilder: (context, _, _) =>
                           const ColoredBox(color: Color(0xFFD9D9D9)),
@@ -381,46 +401,22 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
         const SizedBox(height: 12),
         experiencias.isEmpty
             ? _sinServicios('Aún no hay experiencias publicadas.')
-            : esMovil
-                ? Column(
-                    children: experiencias
-                        .map(
-                          (exp) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: SizedBox(
-                              height: 170,
-                              child: ServicioCard(
-                                servicio: exp,
-                                horizontal: true,
-                                alReservar: () => Navigator.of(context)
-                                    .pushNamed('/servicio',
-                                        arguments: exp.id),
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  )
-                : Row(
-                    children: [
-                      for (var i = 0; i < experiencias.length; i++) ...[
-                        Expanded(
-                          child: SizedBox(
-                            height: 190,
-                            child: ServicioCard(
-                              servicio: experiencias[i],
-                              horizontal: true,
-                              alReservar: () => Navigator.of(context)
-                                  .pushNamed('/servicio',
-                                      arguments: experiencias[i].id),
-                            ),
-                          ),
-                        ),
-                        if (i < experiencias.length - 1)
-                          const SizedBox(width: 16),
-                      ],
-                    ],
-                  ),
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columnas.clamp(1, 3),
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 300 / 350,
+                ),
+                itemCount: experiencias.length,
+                itemBuilder: (context, i) => ServicioCard(
+                  servicio: experiencias[i],
+                  alReservar: () => Navigator.of(context)
+                      .pushNamed('/servicio', arguments: experiencias[i].id),
+                ),
+              ),
       ],
     );
   }

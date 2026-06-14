@@ -68,13 +68,13 @@ void main() {
   });
 
   group('Estrategia de precios', () {
-    test('aplica recargo del 15 % cuando inicia en viernes', () {
+    test('tarifa plana en viernes (sin recargo)', () {
       final viernes = DateTime(2026, 6, 12); // viernes
       final total = estrategiaPara(viernes).calcularTotal(100, 2);
-      expect(total, closeTo(230, 0.001));
+      expect(total, 200);
     });
 
-    test('tarifa regular entre semana', () {
+    test('tarifa plana entre semana', () {
       final lunes = DateTime(2026, 6, 8); // lunes
       final total = estrategiaPara(lunes).calcularTotal(100, 2);
       expect(total, 200);

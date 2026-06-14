@@ -23,6 +23,17 @@ class AuthRepository {
 
   User? get usuarioFirebase => _auth.currentUser;
 
+  /// Stream en tiempo real del perfil del usuario en Firestore.
+  /// Emite `null` si el documento desaparece.
+  Stream<Usuario?> perfilStream(String uid) {
+    return _firestore.collection('usuarios').doc(uid).snapshots().map((doc) {
+      if (doc.exists && doc.data() != null) {
+        return Usuario.fromFirestore(doc.data()!, uid);
+      }
+      return null;
+    });
+  }
+
   /// Inicia sesión y devuelve el perfil completo leído de `usuarios`.
   Future<Usuario> iniciarSesion(String correo, String contrasena) async {
     try {
@@ -34,7 +45,15 @@ class AuthRepository {
       if (user == null) {
         throw const AppException('No fue posible iniciar sesión. Intenta de nuevo.');
       }
-      return await obtenerPerfil(user.uid);
+      final perfil = await obtenerPerfil(user.uid);
+      if (perfil.bloqueado) {
+        await _auth.signOut();
+        throw const AppException(
+          'Tu cuenta ha sido suspendida por el administrador.',
+          esBloqueado: true,
+        );
+      }
+      return perfil;
     } on FirebaseAuthException catch (e) {
       throw AppException(_traducirErrorAuth(e.code));
     } on AppException {
@@ -152,6 +171,12 @@ class AuthRepository {
       throw const AppException(
           'Selecciona un Estado y Municipio válidos de la lista oficial.');
     }
+    if (usuario.esAliado &&
+        usuario.paypalEmail.trim().isNotEmpty &&
+        !Validadores.esCorreoValido(usuario.paypalEmail.trim())) {
+      throw const AppException(
+          'El correo de PayPal no es válido. Usa el formato nombre@ejemplo.com');
+    }
     try {
       await _firestore.collection('usuarios').doc(usuario.uid).update({
         'nombre': usuario.nombre.trim(),
@@ -159,6 +184,8 @@ class AuthRepository {
         'telefono': usuario.telefono.trim(),
         'estado': usuario.estado,
         'municipio': usuario.municipio,
+        if (usuario.esAliado)
+          'paypalEmail': usuario.paypalEmail.trim(),
         'actualizadoEn': FieldValue.serverTimestamp(),
       });
       return usuario;
