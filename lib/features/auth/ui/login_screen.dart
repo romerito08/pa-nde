@@ -176,6 +176,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (valor == null || valor.isEmpty) {
                         return 'Ingresa tu contraseña.';
                       }
+                      if (valor.length < 8) {
+                        return 'La contraseña debe tener al menos 8 caracteres.';
+                      }
                       return null;
                     },
                     onFieldSubmitted: (_) => _enviar(),

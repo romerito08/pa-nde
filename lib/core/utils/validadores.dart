@@ -30,9 +30,10 @@ class Validadores {
   static bool esTelefonoValido(String telefono) =>
       telefonoVenezolano.hasMatch(telefono.trim());
 
-  /// Contraseña segura: mínimo 4 letras, 1 mayúscula y 4 números.
+  /// Contraseña segura: mínimo 8 caracteres, 4 letras, 1 mayúscula y 4 números.
   static String? validarContrasena(String? v) {
     if (v == null || v.isEmpty) return 'Crea una contraseña.';
+    if (v.length < 8) return 'Debe tener al menos 8 caracteres.';
     final letras = RegExp(r'[A-Za-z]').allMatches(v).length;
     final mayusculas = RegExp(r'[A-Z]').allMatches(v).length;
     final numeros = RegExp(r'[0-9]').allMatches(v).length;
