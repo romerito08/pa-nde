@@ -208,9 +208,8 @@ class AuthRepository {
       case 'invalid-credential':
       case 'wrong-password':
       case 'user-not-found':
-        return 'Credenciales inválidas. Verifica tu correo y contraseña.';
       case 'invalid-email':
-        return 'El formato del correo electrónico no es válido.';
+        return 'El correo o la contraseña son incorrectos.';
       case 'email-already-in-use':
         return 'Ese correo ya está registrado. Inicia sesión o usa otro correo.';
       case 'weak-password':
@@ -220,7 +219,7 @@ class AuthRepository {
       case 'network-request-failed':
         return 'Sin conexión a internet. Revisa tu red e intenta otra vez.';
       default:
-        return 'No fue posible completar la operación. Intenta nuevamente.';
+        return 'El correo o la contraseña son incorrectos.';
     }
   }
 }
