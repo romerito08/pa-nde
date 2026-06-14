@@ -120,6 +120,8 @@ class PartnerDashboardController extends ChangeNotifier {
 
   /// Ingresos cobrados por día de la semana actual (lunes a domingo), para
   /// el gráfico de barras de fl_chart.
+  /// Usa [pagadoEn] como referencia temporal (cuándo se recibió el pago),
+  /// no la fecha de inicio del servicio.
   List<double> get ingresosSemana {
     final ahora = DateTime.now();
     final inicioSemana = DateTime(ahora.year, ahora.month, ahora.day)
@@ -129,8 +131,10 @@ class PartnerDashboardController extends ChangeNotifier {
       final pagada = reserva.estado == EstadosReserva.pagado ||
           reserva.estado == EstadosReserva.disfrutado;
       if (!pagada) continue;
-      final dia = DateTime(reserva.fechaInicio.year, reserva.fechaInicio.month,
-          reserva.fechaInicio.day);
+      // Preferir pagadoEn; si no existe (reservas antiguas) usar fechaInicio.
+      final referencia = reserva.pagadoEn ?? reserva.fechaInicio;
+      final dia =
+          DateTime(referencia.year, referencia.month, referencia.day);
       final desplazamiento = dia.difference(inicioSemana).inDays;
       if (desplazamiento >= 0 && desplazamiento < 7) {
         ingresos[desplazamiento] += reserva.total;
@@ -138,6 +142,10 @@ class PartnerDashboardController extends ChangeNotifier {
     }
     return ingresos;
   }
+
+  /// Total acumulado de la semana en curso (suma de [ingresosSemana]).
+  double get totalSemana =>
+      ingresosSemana.fold<double>(0, (acc, v) => acc + v);
 
   /// Próximas reservas activas, ordenadas por fecha de inicio.
   List<Reserva> get proximasReservas {

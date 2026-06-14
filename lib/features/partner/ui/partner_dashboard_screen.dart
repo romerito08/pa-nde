@@ -112,10 +112,25 @@ class _ContenidoDashboard extends StatelessWidget {
                                 ],
                                 _tarjetasMetricas(panel, esMovil),
                                 const SizedBox(height: 32),
-                                Text('Ingresos de la semana',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text('Ingresos de la semana',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge),
+                                    const Spacer(),
+                                    if (panel.totalSemana > 0)
+                                      Text(
+                                        'Total: \$${panel.totalSemana.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          color: AppColors.amarillo,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                                 const SizedBox(height: 16),
                                 _graficoSemana(panel),
                                 const SizedBox(height: 32),
@@ -243,24 +258,81 @@ class _ContenidoDashboard extends StatelessWidget {
   }
 
   /// Gráfico de barras (fl_chart) con los ingresos cobrados por día de la
-  /// semana en curso.
+  /// semana en curso. Resalta el día actual, muestra el monto en tooltip y
+  /// las fechas reales (dd/MM) debajo de cada barra.
   Widget _graficoSemana(PartnerDashboardController panel) {
     final ingresos = panel.ingresosSemana;
     final maximo = ingresos.fold<double>(0, (max, v) => v > max ? v : max);
-    const dias = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    final ahora = DateTime.now();
+    final hoyIndice = ahora.weekday - 1; // 0=Lun … 6=Dom
+    final inicioSemana = DateTime(ahora.year, ahora.month, ahora.day)
+        .subtract(Duration(days: hoyIndice));
+    const etiquetas = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+    if (maximo == 0) {
+      return Container(
+        height: 160,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.verde,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.bar_chart_outlined,
+                  color: AppColors.verdeClaro, size: 40),
+              SizedBox(height: 10),
+              Text(
+                'Sin cobros esta semana todavía.',
+                style: TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
-      height: 240,
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      height: 260,
+      padding: const EdgeInsets.fromLTRB(8, 20, 16, 8),
       decoration: BoxDecoration(
         color: AppColors.verde,
         borderRadius: BorderRadius.circular(16),
       ),
       child: BarChart(
         BarChartData(
-          maxY: maximo == 0 ? 100 : maximo * 1.2,
-          gridData: const FlGridData(show: false),
+          maxY: maximo * 1.25,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maximo / 4,
+            getDrawingHorizontalLine: (_) => const FlLine(
+              color: Colors.white12,
+              strokeWidth: 1,
+            ),
+          ),
           borderData: FlBorderData(show: false),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => AppColors.verdeOscuro,
+              getTooltipItem: (group, _, rod, __) {
+                final monto = rod.toY;
+                if (monto == 0) return null;
+                final fecha = inicioSemana
+                    .add(Duration(days: group.x));
+                final etiqueta = DateFormat('dd/MM').format(fecha);
+                return BarTooltipItem(
+                  '$etiqueta\n\$${monto.toStringAsFixed(2)}',
+                  const TextStyle(
+                      color: AppColors.amarillo,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12),
+                );
+              },
+            ),
+          ),
           titlesData: FlTitlesData(
             topTitles:
                 const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -269,28 +341,57 @@ class _ContenidoDashboard extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 44,
-                getTitlesWidget: (valor, meta) => Text(
-                  '\$${valor.toInt()}',
-                  style: const TextStyle(
-                      color: AppColors.verdeClaro, fontSize: 10),
-                ),
+                reservedSize: 52,
+                interval: maximo / 4,
+                getTitlesWidget: (valor, meta) {
+                  if (valor == 0) return const SizedBox.shrink();
+                  return Text(
+                    '\$${valor.toInt()}',
+                    style: const TextStyle(
+                        color: AppColors.verdeClaro, fontSize: 10),
+                  );
+                },
               ),
             ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize: 40,
                 getTitlesWidget: (valor, meta) {
                   final indice = valor.toInt();
-                  if (indice < 0 || indice >= dias.length) {
+                  if (indice < 0 || indice >= 7) {
                     return const SizedBox.shrink();
                   }
+                  final fecha =
+                      inicioSemana.add(Duration(days: indice));
+                  final esHoy = indice == hoyIndice;
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      dias[indice],
-                      style: const TextStyle(
-                          color: AppColors.verdeClaro, fontSize: 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          etiquetas[indice],
+                          style: TextStyle(
+                            color: esHoy
+                                ? AppColors.amarillo
+                                : AppColors.verdeClaro,
+                            fontSize: 11,
+                            fontWeight: esHoy
+                                ? FontWeight.w700
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        Text(
+                          DateFormat('dd/MM').format(fecha),
+                          style: TextStyle(
+                            color: esHoy
+                                ? AppColors.amarillo
+                                : AppColors.verdeClaro,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -298,14 +399,23 @@ class _ContenidoDashboard extends StatelessWidget {
             ),
           ),
           barGroups: List.generate(7, (indice) {
+            final esHoy = indice == hoyIndice;
+            final valor = ingresos[indice];
             return BarChartGroupData(
               x: indice,
               barRods: [
                 BarChartRodData(
-                  toY: ingresos[indice],
-                  width: 18,
-                  color: AppColors.amarillo,
+                  toY: valor,
+                  width: 20,
+                  color: esHoy
+                      ? AppColors.amarillo
+                      : AppColors.amarillo.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(4),
+                  backDrawRodData: BackgroundBarChartRodData(
+                    show: true,
+                    toY: maximo * 1.25,
+                    color: Colors.white.withValues(alpha: 0.04),
+                  ),
                 ),
               ],
             );

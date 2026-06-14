@@ -40,6 +40,10 @@ class Reserva {
   final String estado;
   final String metodoPago;
 
+  /// Fecha y hora en que el explorador completó el pago. Nulo hasta que el
+  /// estado pase a "Pagado". Se usa para el gráfico de ingresos semanales.
+  final DateTime? pagadoEn;
+
   const Reserva({
     required this.id,
     required this.servicioId,
@@ -55,6 +59,7 @@ class Reserva {
     required this.total,
     required this.estado,
     required this.metodoPago,
+    this.pagadoEn,
   });
 
   int get noches => fechaFin.difference(fechaInicio).inDays;
@@ -78,6 +83,7 @@ class Reserva {
       total: (data['total'] ?? 0).toDouble(),
       estado: data['estado'] ?? EstadosReserva.pendientePago,
       metodoPago: data['metodoPago'] ?? '',
+      pagadoEn: (data['pagadoEn'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -100,7 +106,12 @@ class Reserva {
     };
   }
 
-  Reserva copyWith({String? id, String? estado, String? metodoPago}) {
+  Reserva copyWith({
+    String? id,
+    String? estado,
+    String? metodoPago,
+    DateTime? pagadoEn,
+  }) {
     return Reserva(
       id: id ?? this.id,
       servicioId: servicioId,
@@ -116,6 +127,7 @@ class Reserva {
       total: total,
       estado: estado ?? this.estado,
       metodoPago: metodoPago ?? this.metodoPago,
+      pagadoEn: pagadoEn ?? this.pagadoEn,
     );
   }
 }

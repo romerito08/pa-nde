@@ -132,6 +132,9 @@ class BookingRepository {
         'metodoPago': ?metodoPago,
         'codigoAutorizacion': ?codigoAutorizacion,
         'actualizadoEn': FieldValue.serverTimestamp(),
+        // Registrar el momento exacto del cobro para el gráfico de ingresos.
+        if (nuevoEstado == EstadosReserva.pagado)
+          'pagadoEn': FieldValue.serverTimestamp(),
       });
     } catch (_) {
       throw const AppException(
