@@ -1,0 +1,168 @@
+rules_version = '2';
+
+// Reglas de seguridad de Pa'onde (RNF/RF15): validación de servidor que
+// complementa la validación de cliente. Desplegar con:
+//   firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------- Funciones auxiliares -------
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function rolDe(uid) {
+      return get(/databases/$(database)/documents/usuarios/$(uid)).data.rol;
+    }
+
+    function esAdministrador() {
+      return autenticado() && rolDe(request.auth.uid) == 'Administrador';
+    }
+
+    function esAliado() {
+      return autenticado() && rolDe(request.auth.uid) == 'Aliado';
+    }
+
+    // ------- usuarios: cada quien gestiona su propio perfil -------
+    match /usuarios/{uid} {
+      allow read: if autenticado() && (request.auth.uid == uid || esAdministrador());
+      // El registro público solo puede crear Exploradores o Aliados; el rol
+      // Administrador se asigna manualmente desde la consola.
+      allow create: if autenticado()
+        && request.auth.uid == uid
+        && request.resource.data.rol in ['Explorador', 'Aliado'];
+      // El usuario puede editar su perfil pero nunca escalar su propio rol
+      // ni cambiar el campo bloqueado.
+      // El Administrador solo puede modificar el campo `bloqueado`.
+      allow update: if autenticado() && (
+        (request.auth.uid == uid
+          && request.resource.data.rol == resource.data.rol
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['bloqueado']))
+        || (esAdministrador()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bloqueado']))
+      );
+      allow delete: if esAdministrador();
+    }
+
+    // ------- servicios: catálogo público, escritura del aliado dueño -------
+    match /servicios/{servicioId} {
+      allow read: if true;
+      allow create: if esAliado()
+        && request.resource.data.creadoPor == request.auth.uid;
+      // El dueño edita todo; cualquier autenticado solo puede tocar los
+      // agregados de reseñas (transacción del módulo de reseñas).
+      // El Administrador puede cambiar estadoPublicacion (aprobar/rechazar).
+      allow update: if (esAliado() && resource.data.creadoPor == request.auth.uid)
+        || (autenticado()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['calificacionPromedio', 'totalResenas']))
+        || (esAdministrador()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['estadoPublicacion', 'actualizadoEn', 'motivoRechazo']));
+      allow delete: if (esAliado() && resource.data.creadoPor == request.auth.uid)
+        || esAdministrador();
+
+      // Subcolección de reseñas (RF06)
+      match /resenas/{resenaId} {
+        allow read: if true;
+        allow create: if autenticado()
+          && request.resource.data.usuarioId == request.auth.uid
+          && request.resource.data.calificacion >= 1
+          && request.resource.data.calificacion <= 5
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0;
+        allow update: if esAdministrador();
+        // El administrador gestiona reseñas; el dueño del servicio puede borrarlas
+        // únicamente al eliminar su propio servicio (limpieza de subcolección).
+        allow delete: if esAdministrador()
+          || (esAliado()
+              && get(/databases/$(database)/documents/servicios/$(servicioId)).data.creadoPor
+                 == request.auth.uid);
+      }
+    }
+
+    // ------- reservas: flujo directo Pendiente de Pago → Pagado → Disfrutado -------
+    match /reservas/{reservaId} {
+      allow read: if autenticado()
+        && (resource.data.usuarioId == request.auth.uid
+            || resource.data.aliadoId == request.auth.uid
+            || esAdministrador());
+      // Reserva directa: nace en "Pendiente de Pago" sin aprobación previa.
+      allow create: if autenticado()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'Pendiente de Pago'
+        && request.resource.data.total is number
+        && request.resource.data.total > 0;
+      // El explorador registra su pago; el aliado marca disfrutada la
+      // estadía pagada que concluyó.
+      allow update: if autenticado() && (
+        (resource.data.usuarioId == request.auth.uid
+          && request.resource.data.estado == 'Pagado'
+          && resource.data.estado == 'Pendiente de Pago')
+        || (resource.data.aliadoId == request.auth.uid
+          && request.resource.data.estado == 'Disfrutado'
+          && resource.data.estado == 'Pagado')
+      );
+      // Solo se cancela (borra) una reserva que aún no fue pagada.
+      allow delete: if autenticado()
+        && resource.data.usuarioId == request.auth.uid
+        && resource.data.estado == 'Pendiente de Pago';
+    }
+
+    // ------- cotizaciones: solicitud del explorador + feedback del aliado -------
+    match /cotizaciones/{cotizacionId} {
+      allow read: if autenticado()
+        && (resource.data.usuarioId == request.auth.uid
+            || resource.data.aliadoId == request.auth.uid
+            || esAdministrador());
+      allow create: if autenticado()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'Pendiente'
+        && request.resource.data.mensaje is string
+        && request.resource.data.mensaje.size() >= 10;
+      // El aliado responde con feedback + estado; el explorador puede
+      // contra-responder ante una Contrapropuesta (solo toca turnoAliado y mensajeExplorador).
+      allow update: if autenticado() && (
+        (resource.data.aliadoId == request.auth.uid
+          && request.resource.data.estado in ['Aceptada', 'Rechazada', 'Contrapropuesta']
+          && request.resource.data.feedback is string
+          && request.resource.data.feedback.size() > 0)
+        || (resource.data.usuarioId == request.auth.uid
+          && resource.data.estado == 'Contrapropuesta'
+          && !resource.data.turnoAliado
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['mensajeExplorador', 'turnoAliado'])
+          && request.resource.data.mensajeExplorador is string
+          && request.resource.data.mensajeExplorador.size() > 0)
+        // Explorador vincula la Reserva creada (solo puede escribir reservaId una vez)
+        || (resource.data.usuarioId == request.auth.uid
+          && resource.data.get('reservaId', '') == ''
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['reservaId'])
+          && request.resource.data.reservaId is string
+          && request.resource.data.reservaId.size() > 0)
+        // Explorador actualiza o agrega fechas (mientras no exista reserva)
+        || (resource.data.usuarioId == request.auth.uid
+          && resource.data.get('reservaId', '') == ''
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['fechaInicio', 'fechaFin']))
+      );
+      allow delete: if esAdministrador();
+    }
+
+    // ------- calendarios: disponibilidad consultable por todos -------
+    match /calendarios/{ocupacionId} {
+      allow read: if true;
+      allow create: if autenticado();
+      allow delete: if autenticado();
+      allow update: if false;
+    }
+
+    // ------- busquedas: telemetría anónima, lectura solo para el admin -------
+    match /busquedas/{busquedaId} {
+      allow create: if true;
+      allow read: if esAdministrador();
+      allow update, delete: if false;
+    }
+  }
+}
