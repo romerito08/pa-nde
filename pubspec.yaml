@@ -28,12 +28,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  image_picker: ^1.2.2
-  firebase_storage: ^13.0.6
   flutter:
     sdk: flutter
-  carousel_slider: ^5.0.0
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -41,6 +37,11 @@ dependencies:
   firebase_auth: ^6.5.1
   cloud_firestore: ^6.4.1
   intl: ^0.20.2
+  provider: ^6.1.5+1
+  fl_chart: ^1.2.0
+  google_fonts: ^8.1.0
+  file_picker: ^8.1.6
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:
