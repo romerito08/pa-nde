@@ -25,6 +25,19 @@ class ReviewRepository {
             .toList());
   }
 
+  /// Cuántas reseñas ha dejado este usuario para el servicio dado.
+  Future<int> contarResenasDeUsuario(
+      String servicioId, String usuarioId) async {
+    try {
+      final snapshot = await _subcoleccion(servicioId)
+          .where('usuarioId', isEqualTo: usuarioId)
+          .get();
+      return snapshot.docs.length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   /// Guarda la reseña en la subcolección y recalcula el promedio general de
   /// estrellas del servicio en la misma transacción, para que la cabecera de
   /// la pantalla se actualice de inmediato vía stream.

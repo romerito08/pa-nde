@@ -1123,20 +1123,67 @@ class _TarjetaPendienteState extends State<_TarjetaPendiente> {
   }
 
   Future<void> _rechazar() async {
-    final confirmado = await FeedbackHelper.confirmar(
-      context,
-      titulo: 'Rechazar publicación',
-      mensaje:
-          '¿Confirmas que deseas rechazar "${widget.servicio.nombre}"? '
-          'El servicio quedará pausado y no será visible.',
-      textoConfirmar: 'Sí, rechazar',
+    final motivoController = TextEditingController();
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.verde,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Rechazar publicación',
+          style: TextStyle(color: AppColors.blanco, fontWeight: FontWeight.w700),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Deseas rechazar "${widget.servicio.nombre}"? El servicio quedará pausado.',
+              style: const TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Motivo del rechazo (visible para el aliado):',
+              style: TextStyle(
+                  color: AppColors.blanco,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: motivoController,
+              maxLines: 3,
+              style: const TextStyle(color: AppColors.blanco),
+              decoration: const InputDecoration(
+                  hintText:
+                      'Ej: Las imágenes no cumplen los estándares mínimos.'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar',
+                style: TextStyle(color: AppColors.verdeClaro)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
+            child: const Text('Sí, rechazar'),
+          ),
+        ],
+      ),
     );
-    if (!confirmado || !mounted) return;
+    final motivo = motivoController.text.trim();
+    motivoController.dispose();
+    if (confirmado != true || !mounted) return;
 
     setState(() => _rechazando = true);
     final error = await context
         .read<AdminGestionController>()
-        .rechazar(widget.servicio.id);
+        .rechazar(widget.servicio.id, motivo: motivo);
     if (!mounted) return;
     setState(() => _rechazando = false);
     if (error != null) {
@@ -1239,20 +1286,67 @@ class _TarjetaAprobadaState extends State<_TarjetaAprobada> {
   bool _suspendiendo = false;
 
   Future<void> _suspender() async {
-    final confirmado = await FeedbackHelper.confirmar(
-      context,
-      titulo: 'Suspender publicación',
-      mensaje:
-          '¿Confirmas que deseas suspender "${widget.servicio.nombre}"? '
-          'Dejará de ser visible en el catálogo hasta que la apruebes de nuevo.',
-      textoConfirmar: 'Sí, suspender',
+    final motivoController = TextEditingController();
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.verde,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Suspender publicación',
+          style: TextStyle(color: AppColors.blanco, fontWeight: FontWeight.w700),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Deseas suspender "${widget.servicio.nombre}"? Dejará de ser visible en el catálogo.',
+              style: const TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Motivo de la suspensión (visible para el aliado):',
+              style: TextStyle(
+                  color: AppColors.blanco,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: motivoController,
+              maxLines: 3,
+              style: const TextStyle(color: AppColors.blanco),
+              decoration: const InputDecoration(
+                  hintText:
+                      'Ej: Se reportaron quejas de los exploradores.'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar',
+                style: TextStyle(color: AppColors.verdeClaro)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.advertencia,
+                foregroundColor: Colors.black),
+            child: const Text('Sí, suspender'),
+          ),
+        ],
+      ),
     );
-    if (!confirmado || !mounted) return;
+    final motivo = motivoController.text.trim();
+    motivoController.dispose();
+    if (confirmado != true || !mounted) return;
 
     setState(() => _suspendiendo = true);
     final error = await context
         .read<AdminGestionController>()
-        .suspender(widget.servicio.id);
+        .suspender(widget.servicio.id, motivo: motivo);
     if (!mounted) return;
     setState(() => _suspendiendo = false);
     if (error != null) {
@@ -1354,31 +1448,63 @@ class _TarjetaRechazadaState extends State<_TarjetaRechazada> {
             bottomRight: Radius.circular(14),
           ),
         ),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _aprobando ? null : _reaprobar,
-            icon: _aprobando
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.check_circle_outline, size: 18),
-            label: Text(_aprobando ? 'Aprobando…' : 'Aprobar de nuevo'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.exito,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.exito.withValues(alpha: 0.5),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              textStyle:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.servicio.motivoRechazo.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline,
+                        size: 14, color: AppColors.error),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        widget.servicio.motivoRechazo,
+                        style: const TextStyle(
+                            color: AppColors.blanco,
+                            fontSize: 12,
+                            height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            ElevatedButton.icon(
+              onPressed: _aprobando ? null : _reaprobar,
+              icon: _aprobando
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.check_circle_outline, size: 18),
+              label: Text(_aprobando ? 'Aprobando…' : 'Aprobar de nuevo'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.exito,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    AppColors.exito.withValues(alpha: 0.5),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                textStyle:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

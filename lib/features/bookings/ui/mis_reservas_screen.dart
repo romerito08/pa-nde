@@ -15,6 +15,8 @@ import '../../catalog/logic/catalog_controller.dart';
 import '../../catalog/logic/favoritos_controller.dart';
 import '../../catalog/ui/widgets/servicio_card.dart';
 import '../../quotes/logic/quotes_controller.dart';
+import '../../reviews/data/review_repository.dart';
+import '../data/booking_repository.dart';
 import '../logic/mis_reservas_controller.dart';
 
 /// "Mis Reservas" del Explorador, con tres pestañas:
@@ -323,11 +325,45 @@ class _MisReservasScreenState extends State<MisReservasScreen> {
 
 // ── Tarjeta de reserva ────────────────────────────────────────────────────────
 
-class _TarjetaReserva extends StatelessWidget {
+class _TarjetaReserva extends StatefulWidget {
   final Reserva reserva;
   final bool esMovil;
 
   const _TarjetaReserva({required this.reserva, required this.esMovil});
+
+  @override
+  State<_TarjetaReserva> createState() => _TarjetaReservaState();
+}
+
+class _TarjetaReservaState extends State<_TarjetaReserva> {
+  final _bookingRepo = BookingRepository();
+  final _reviewRepo = ReviewRepository();
+  Future<bool>? _puedeResenarFuture;
+
+  Reserva get reserva => widget.reserva;
+  bool get esMovil => widget.esMovil;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (reserva.estado == EstadosReserva.disfrutado) {
+      _actualizarPermiso();
+    }
+  }
+
+  void _actualizarPermiso() {
+    final uid = context.read<AuthController>().usuario?.uid;
+    if (uid == null) {
+      setState(() => _puedeResenarFuture = Future.value(false));
+      return;
+    }
+    setState(() {
+      _puedeResenarFuture = Future.wait([
+        _bookingRepo.contarDisfrutadasDeUsuario(uid, reserva.servicioId),
+        _reviewRepo.contarResenasDeUsuario(reserva.servicioId, uid),
+      ]).then((c) => c[0] > c[1]);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -403,60 +439,95 @@ class _TarjetaReserva extends StatelessWidget {
           const SizedBox(height: 16),
           _lineaDeEstados(),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (procesando)
-                const SizedBox(
-                    width: 24, height: 24, child: CircularProgressIndicator())
-              else ...[
-                if (reserva.estado == EstadosReserva.pendientePago) ...[
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final confirmado = await FeedbackHelper.confirmar(
-                        context,
-                        titulo: 'Cancelar reserva',
-                        mensaje:
-                            '¿Seguro que quieres cancelar tu reserva en "${reserva.servicioNombre}"? Las fechas quedarán liberadas.',
-                        textoConfirmar: 'Sí, cancelar',
-                        textoCancelar: 'Volver',
-                      );
-                      if (!confirmado || !context.mounted) return;
-                      final mensajeError = await context
-                          .read<MisReservasController>()
-                          .cancelar(reserva);
-                      if (!context.mounted) return;
-                      if (mensajeError == null) {
-                        FeedbackHelper.mostrarExito(
-                            context, 'Reserva cancelada y fechas liberadas.');
-                      } else {
-                        FeedbackHelper.mostrarError(context, mensajeError);
-                      }
-                    },
-                    icon: const Icon(Icons.close, size: 16),
-                    label: const Text('Cancelar'),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamed('/checkout', arguments: reserva),
-                    icon: const Icon(Icons.payment_outlined, size: 18),
-                    label: const Text('Pagar ahora'),
-                  ),
-                ],
-                if (reserva.estado == EstadosReserva.pagado)
-                  const Text(
-                    'Pago confirmado. ¡Disfruta tu experiencia!',
-                    style: TextStyle(color: AppColors.exito, fontSize: 13),
-                  ),
-                if (reserva.estado == EstadosReserva.disfrutado)
-                  const Text(
-                    '¡Gracias por viajar con Pa\'onde! Deja tu reseña en el servicio.',
-                    style: TextStyle(color: AppColors.amarillo, fontSize: 13),
-                  ),
+          if (procesando)
+            const Center(
+                child: SizedBox(
+                    width: 24, height: 24, child: CircularProgressIndicator()))
+          else if (reserva.estado == EstadosReserva.pendientePago)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final confirmado = await FeedbackHelper.confirmar(
+                      context,
+                      titulo: 'Cancelar reserva',
+                      mensaje:
+                          '¿Seguro que quieres cancelar tu reserva en "${reserva.servicioNombre}"? Las fechas quedarán liberadas.',
+                      textoConfirmar: 'Sí, cancelar',
+                      textoCancelar: 'Volver',
+                    );
+                    if (!confirmado || !context.mounted) return;
+                    final mensajeError = await context
+                        .read<MisReservasController>()
+                        .cancelar(reserva);
+                    if (!context.mounted) return;
+                    if (mensajeError == null) {
+                      FeedbackHelper.mostrarExito(
+                          context, 'Reserva cancelada y fechas liberadas.');
+                    } else {
+                      FeedbackHelper.mostrarError(context, mensajeError);
+                    }
+                  },
+                  icon: const Icon(Icons.close, size: 16),
+                  label: const Text('Cancelar'),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context)
+                      .pushNamed('/checkout', arguments: reserva),
+                  icon: const Icon(Icons.payment_outlined, size: 18),
+                  label: const Text('Pagar ahora'),
+                ),
               ],
-            ],
-          ),
+            )
+          else if (reserva.estado == EstadosReserva.pagado)
+            const Text(
+              'Pago confirmado. ¡Disfruta tu experiencia!',
+              style: TextStyle(color: AppColors.exito, fontSize: 13),
+            )
+          else if (reserva.estado == EstadosReserva.disfrutado)
+            FutureBuilder<bool>(
+              future: _puedeResenarFuture,
+              builder: (context, snap) {
+                final puede = snap.data ?? false;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      puede
+                          ? '¡Gracias por viajar con Pa\'onde!'
+                          : '¡Gracias por viajar con Pa\'onde! Ya dejaste tu reseña.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: puede
+                              ? AppColors.exito
+                              : AppColors.verdeClaro,
+                          fontSize: 13),
+                    ),
+                    if (puede) ...[
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Navigator.of(context).pushNamed('/servicio',
+                              arguments: reserva.servicioId);
+                          if (mounted) _actualizarPermiso();
+                        },
+                        icon: const Icon(Icons.star_outline, size: 18),
+                        label: const Text('Dejar reseña'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.amarillo,
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size.fromHeight(44),
+                          textStyle: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
         ],
       ),
     );

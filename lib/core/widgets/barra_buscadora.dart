@@ -32,6 +32,7 @@ class BarraBuscadora extends StatefulWidget {
 class _BarraBuscadoraState extends State<BarraBuscadora> {
   final _controller = TextEditingController();
   final _layerLink = LayerLink();
+  final _buttonKey = GlobalKey();
   OverlayEntry? _entry;
 
   bool get _abierto => _entry != null;
@@ -59,6 +60,20 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
   }
 
   Widget _buildEntry(BuildContext ctx) {
+    // Calcular el espacio disponible debajo del botón para que el panel
+    // nunca desborde el viewport, pero siempre pueda hacer scroll interno.
+    double panelMaxHeight = MediaQuery.of(context).size.height * 0.78;
+    final box =
+        _buttonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null) {
+      final bottomY =
+          box.localToGlobal(Offset(0, box.size.height)).dy;
+      final available =
+          MediaQuery.of(context).size.height - bottomY - 16;
+      panelMaxHeight =
+          available.clamp(220.0, MediaQuery.of(context).size.height * 0.85);
+    }
+
     return Stack(
       children: [
         // Toque fuera del panel → cerrar
@@ -83,6 +98,7 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
               child: _PanelFiltros(
                 onCerrar: _cerrarPanel,
                 onNavegar: widget.onFiltrosAplicados,
+                maxHeight: panelMaxHeight,
               ),
             ),
           ),
@@ -138,6 +154,7 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
             width: 42,
             height: 42,
             child: ElevatedButton(
+              key: _buttonKey,
               onPressed: _togglePanel,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -168,7 +185,12 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
 class _PanelFiltros extends StatefulWidget {
   final VoidCallback onCerrar;
   final VoidCallback? onNavegar;
-  const _PanelFiltros({required this.onCerrar, this.onNavegar});
+  final double maxHeight;
+  const _PanelFiltros({
+    required this.onCerrar,
+    this.onNavegar,
+    required this.maxHeight,
+  });
 
   @override
   State<_PanelFiltros> createState() => _PanelFiltrosState();
@@ -252,9 +274,7 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
 
     return Container(
       width: 300,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.78,
-      ),
+      constraints: BoxConstraints(maxHeight: widget.maxHeight),
       decoration: BoxDecoration(
         color: AppColors.verde,
         borderRadius: BorderRadius.circular(12),
@@ -263,7 +283,9 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
               color: Colors.black45, blurRadius: 24, offset: Offset(0, 8)),
         ],
       ),
-      child: SingleChildScrollView(
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,6 +513,7 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

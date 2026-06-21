@@ -167,11 +167,31 @@ class AdminRepository {
     }
   }
 
-  Future<void> rechazarPublicacion(String servicioId) =>
-      _actualizarEstadoServicio(servicioId, EstadosPublicacion.pausado,
+  Future<void> rechazarPublicacion(String servicioId,
+      {String motivo = ''}) async {
+    try {
+      await _firestore.collection('servicios').doc(servicioId).update({
+        'estadoPublicacion': EstadosPublicacion.pausado,
+        'motivoRechazo': motivo,
+        'actualizadoEn': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      throw const AppException(
           'No pudimos rechazar la publicación. Intenta de nuevo.');
+    }
+  }
 
-  Future<void> suspenderPublicacion(String servicioId) =>
-      _actualizarEstadoServicio(servicioId, EstadosPublicacion.pausado,
+  Future<void> suspenderPublicacion(String servicioId,
+      {String motivo = ''}) async {
+    try {
+      await _firestore.collection('servicios').doc(servicioId).update({
+        'estadoPublicacion': EstadosPublicacion.pausado,
+        'motivoRechazo': motivo,
+        'actualizadoEn': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      throw const AppException(
           'No pudimos suspender la publicación. Intenta de nuevo.');
+    }
+  }
 }

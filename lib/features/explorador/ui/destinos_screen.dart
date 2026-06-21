@@ -147,8 +147,10 @@ class _DestinosScreenState extends State<DestinosScreen> {
   Widget _grilla(bool esMovil, double anchoPantalla) {
     final catalogo = context.watch<CatalogController>();
 
+    // Usar todos los servicios (sin filtrar) para que la imagen de cada
+    // estado sea siempre la misma sin importar el filtro activo.
     final imagenPorEstado = <String, String>{};
-    for (final s in catalogo.resultados) {
+    for (final s in catalogo.todos) {
       if (s.estado.isNotEmpty) {
         imagenPorEstado.putIfAbsent(s.estado, () => s.imagenPrincipal);
       }

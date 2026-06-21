@@ -39,6 +39,10 @@ class CatalogController extends ChangeNotifier {
   }
 
   List<Servicio> get resultados => _resultados;
+
+  /// Todos los servicios activos sin filtrar, para construir mapas estables
+  /// (p. ej. imagen representativa por estado en DestinosScreen).
+  List<Servicio> get todos => _todos;
   bool get cargando => _cargando;
   String? get error => _error;
   String? get advertencia => _advertencia;

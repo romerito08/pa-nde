@@ -9,8 +9,27 @@ import '../logic/review_controller.dart';
 /// Sección de comentarios de la vista de detalle (RF06): desplegable
 /// numérico de estrellas, campo de texto y botón "Enviar Comentario" que
 /// impacta la subcolección, limpia el campo y recalcula el promedio en vivo.
-class ReviewSection extends StatelessWidget {
+/// El formulario sólo se muestra si el usuario tiene al menos una reserva
+/// en estado "Disfrutado" para este servicio.
+class ReviewSection extends StatefulWidget {
   const ReviewSection({super.key});
+
+  @override
+  State<ReviewSection> createState() => _ReviewSectionState();
+}
+
+class _ReviewSectionState extends State<ReviewSection> {
+  String? _ultimoUid;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final uid = context.read<AuthController>().usuario?.uid;
+    if (uid != _ultimoUid) {
+      _ultimoUid = uid;
+      context.read<ReviewController>().verificarPermiso(uid);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,14 +41,37 @@ class ReviewSection extends StatelessWidget {
         Text('Reseñas de otros exploradores',
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 16),
-        _formulario(context, controlador),
+        _formularioOAviso(context, controlador),
         const SizedBox(height: 24),
         _lista(controlador),
       ],
     );
   }
 
-  Widget _formulario(BuildContext context, ReviewController controlador) {
+  Widget _formularioOAviso(BuildContext context, ReviewController controlador) {
+    if (!controlador.puedeResenar) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.verde,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.lock_outline,
+                color: AppColors.verdeClaro, size: 20),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Solo puedes dejar una reseña una vez que hayas disfrutado este servicio.',
+                style: TextStyle(color: AppColors.verdeClaro, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -51,7 +93,6 @@ class ReviewSection extends StatelessWidget {
                       fontSize: 15),
                 ),
               ),
-              // Desplegable numérico de estrellas (1 a 5).
               DropdownButton<int>(
                 value: controlador.calificacionSeleccionada,
                 dropdownColor: AppColors.verde,

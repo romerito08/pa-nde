@@ -142,6 +142,23 @@ class BookingRepository {
     }
   }
 
+  /// Cuántas reservas en estado "Disfrutado" tiene el usuario para el servicio.
+  /// Permite comparar con la cantidad de reseñas ya dejadas (una por reserva).
+  Future<int> contarDisfrutadasDeUsuario(
+      String usuarioId, String servicioId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('reservas')
+          .where('usuarioId', isEqualTo: usuarioId)
+          .where('servicioId', isEqualTo: servicioId)
+          .where('estado', isEqualTo: EstadosReserva.disfrutado)
+          .get();
+      return snapshot.docs.length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   /// Cancela una reserva aún no aceptada: elimina el documento y libera sus
   /// fechas en `calendarios`.
   Future<void> cancelarReserva(String reservaId) async {

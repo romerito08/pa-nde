@@ -61,6 +61,11 @@ class Servicio {
   final double calificacionPromedio;
   final int totalResenas;
   final String estadoPublicacion;
+
+  /// Motivo que el administrador escribió al rechazar esta publicación.
+  /// Vacío si fue aprobada o nunca rechazada.
+  final String motivoRechazo;
+
   final String creadoPor;
 
   const Servicio({
@@ -80,6 +85,7 @@ class Servicio {
     required this.calificacionPromedio,
     required this.totalResenas,
     required this.estadoPublicacion,
+    this.motivoRechazo = '',
     required this.creadoPor,
   });
 
@@ -119,6 +125,7 @@ class Servicio {
       totalResenas: (data['totalResenas'] ?? 0).toInt(),
       estadoPublicacion:
           data['estadoPublicacion'] ?? EstadosPublicacion.activo,
+      motivoRechazo: data['motivoRechazo'] ?? '',
       creadoPor: data['creadoPor'] ?? '',
     );
   }
@@ -140,6 +147,7 @@ class Servicio {
       'calificacionPromedio': calificacionPromedio,
       'totalResenas': totalResenas,
       'estadoPublicacion': estadoPublicacion,
+      'motivoRechazo': motivoRechazo,
       'creadoPor': creadoPor,
       'actualizadoEn': FieldValue.serverTimestamp(),
     };

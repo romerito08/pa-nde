@@ -58,7 +58,7 @@ service cloud.firestore {
                 .hasOnly(['calificacionPromedio', 'totalResenas']))
         || (esAdministrador()
             && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['estadoPublicacion', 'actualizadoEn']));
+                .hasOnly(['estadoPublicacion', 'actualizadoEn', 'motivoRechazo']));
       allow delete: if (esAliado() && resource.data.creadoPor == request.auth.uid)
         || esAdministrador();
 

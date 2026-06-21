@@ -98,18 +98,18 @@ class AdminGestionController extends ChangeNotifier {
     }
   }
 
-  Future<String?> rechazar(String servicioId) async {
+  Future<String?> rechazar(String servicioId, {String motivo = ''}) async {
     try {
-      await _repository.rechazarPublicacion(servicioId);
+      await _repository.rechazarPublicacion(servicioId, motivo: motivo);
       return null;
     } on AppException catch (e) {
       return e.mensaje;
     }
   }
 
-  Future<String?> suspender(String servicioId) async {
+  Future<String?> suspender(String servicioId, {String motivo = ''}) async {
     try {
-      await _repository.suspenderPublicacion(servicioId);
+      await _repository.suspenderPublicacion(servicioId, motivo: motivo);
       return null;
     } on AppException catch (e) {
       return e.mensaje;
