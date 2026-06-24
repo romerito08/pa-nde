@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     projectId: 'paonde-app',
     storageBucket: 'paonde-app.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC03vbeBcGnq2ltTKRsmcvcJgu-zJyLfWY',
     appId: '1:76673791229:ios:bd4ceb9da1f4bfd234fa94',
@@ -66,7 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'paonde-app.firebasestorage.app',
     iosBundleId: 'com.example.paondeApp',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyC03vbeBcGnq2ltTKRsmcvcJgu-zJyLfWY',
     appId: '1:76673791229:ios:bd4ceb9da1f4bfd234fa94',

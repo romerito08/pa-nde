@@ -164,5 +164,4 @@ class PartnerDashboardController extends ChangeNotifier {
     _suscripcionCotizaciones?.cancel();
     super.dispose();
   }
-  
 }

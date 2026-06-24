@@ -18,7 +18,8 @@ class ExploradorInicioScreen extends StatefulWidget {
   const ExploradorInicioScreen({super.key});
 
   @override
-  State<ExploradorInicioScreen> createState() => _ExploradorInicioScreenState();
+  State<ExploradorInicioScreen> createState() =>
+      _ExploradorInicioScreenState();
 }
 
 class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
@@ -36,7 +37,7 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
   void _buscar(String texto) {
     final consulta = texto.trim().toLowerCase();
     final catalogo = context.read<CatalogController>();
-
+    
     // CORRECCIÓN: Si la consulta está vacía, limpia filtros y restaura la data inicial
     if (consulta.isEmpty) {
       catalogo.limpiarFiltros();
@@ -54,9 +55,31 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
         return;
       }
     }
-  }
 
- 
+    // 2. Coincide con un Municipio → ir a Destinos con filtro geográfico.
+    String? municipioEncontrado;
+    String? estadoDelMunicipio;
+    busqueda:
+    for (final estado in VenezuelaGeo.estados) {
+      for (final municipio in VenezuelaGeo.municipiosDe(estado)) {
+        if (municipio.toLowerCase().contains(consulta)) {
+          municipioEncontrado = municipio;
+          estadoDelMunicipio = estado;
+          break busqueda;
+        }
+      }
+    }
+    if (municipioEncontrado != null) {
+      catalogo.actualizarUbicacion(estadoDelMunicipio, municipioEncontrado);
+      catalogo.buscarLocalmente();
+      Navigator.of(context).pushNamed('/destinos');
+      return;
+    }
+
+    // 3. Búsqueda por nombre / descripción → ir a la categoría con más resultados.
+    catalogo.buscarLocalmente();
+    _navegarPorResultados(catalogo);
+  }
 
   void _navegarPorResultados(CatalogController catalogo) {
     final experiencias = catalogo.resultados
@@ -85,7 +108,8 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
       builder: (context, constraints) {
         final esMovil = constraints.maxWidth < 850;
         return Scaffold(
-          drawer: esMovil ? const AppDrawer(rutaActual: '/inicio') : null,
+          drawer:
+              esMovil ? const AppDrawer(rutaActual: '/inicio') : null,
           appBar: esMovil
               ? const AppHeader(rutaActual: '/inicio', esMovil: true)
               : null,
@@ -102,9 +126,7 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                     constraints: const BoxConstraints(maxWidth: 1100),
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: esMovil ? 16 : 40,
-                        vertical: 32,
-                      ),
+                          horizontal: esMovil ? 16 : 40, vertical: 32),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -165,7 +187,9 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                 color: AppColors.blanco,
                 fontSize: esMovil ? 28 : 44,
                 fontWeight: FontWeight.w700,
-                shadows: const [Shadow(blurRadius: 12, color: Colors.black87)],
+                shadows: const [
+                  Shadow(blurRadius: 12, color: Colors.black87)
+                ],
               ),
             ),
           ),
@@ -179,9 +203,7 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
     return Container(
       color: AppColors.verdeOscuro,
       padding: EdgeInsets.symmetric(
-        horizontal: esMovil ? 20 : 48,
-        vertical: 24,
-      ),
+          horizontal: esMovil ? 20 : 48, vertical: 24),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -213,9 +235,7 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
     for (final servicio in catalogo.resultados) {
       if (servicio.estado.isEmpty) continue;
       imagenPorEstado.putIfAbsent(
-        servicio.estado,
-        () => servicio.imagenPrincipal,
-      );
+          servicio.estado, () => servicio.imagenPrincipal);
     }
     const curados = ['Nueva Esparta', 'Mérida', 'Miranda', 'La Guaira'];
     for (final estado in curados) {
@@ -246,7 +266,8 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                       errorBuilder: (context, _, _) =>
                           const ColoredBox(color: Color(0xFFD9D9D9)),
                     ),
-                  Container(color: Colors.black.withValues(alpha: 0.25)),
+                  Container(
+                      color: Colors.black.withValues(alpha: 0.25)),
                   Center(
                     child: Text(
                       d.key,
@@ -254,7 +275,9 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        shadows: [Shadow(blurRadius: 6, color: Colors.black54)],
+                        shadows: [
+                          Shadow(blurRadius: 6, color: Colors.black54)
+                        ],
                       ),
                     ),
                   ),
@@ -271,10 +294,9 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
         const Text(
           'Descubre Venezuela',
           style: TextStyle(
-            color: AppColors.blanco,
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
+              color: AppColors.blanco,
+              fontSize: 22,
+              fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 16),
         esMovil
@@ -311,9 +333,7 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
 
     if (catalogo.cargando) {
       return const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator()),
-      );
+          height: 200, child: Center(child: CircularProgressIndicator()));
     }
 
     final alojamientos = catalogo.resultados
@@ -351,10 +371,9 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
         const Text(
           'Alojamientos',
           style: TextStyle(
-            color: AppColors.blanco,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+              color: AppColors.blanco,
+              fontSize: 15,
+              fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 12),
         alojamientos.isEmpty
@@ -371,19 +390,18 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                 itemCount: alojamientos.length.clamp(0, columnas),
                 itemBuilder: (context, i) => ServicioCard(
                   servicio: alojamientos[i],
-                  alReservar: () => Navigator.of(
-                    context,
-                  ).pushNamed('/servicio', arguments: alojamientos[i].id),
+                  alReservar: () => Navigator.of(context).pushNamed(
+                      '/servicio',
+                      arguments: alojamientos[i].id),
                 ),
               ),
         const SizedBox(height: 24),
         const Text(
           'Experiencias',
           style: TextStyle(
-            color: AppColors.blanco,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+              color: AppColors.blanco,
+              fontSize: 15,
+              fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 12),
         experiencias.isEmpty
@@ -400,9 +418,8 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
                 itemCount: experiencias.length,
                 itemBuilder: (context, i) => ServicioCard(
                   servicio: experiencias[i],
-                  alReservar: () => Navigator.of(
-                    context,
-                  ).pushNamed('/servicio', arguments: experiencias[i].id),
+                  alReservar: () => Navigator.of(context)
+                      .pushNamed('/servicio', arguments: experiencias[i].id),
                 ),
               ),
       ],
@@ -417,10 +434,8 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Center(
-        child: Text(
-          mensaje,
-          style: const TextStyle(color: AppColors.verdeClaro),
-        ),
+        child: Text(mensaje,
+            style: const TextStyle(color: AppColors.verdeClaro)),
       ),
     );
   }

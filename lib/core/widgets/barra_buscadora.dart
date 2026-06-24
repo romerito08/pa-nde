@@ -119,8 +119,9 @@ class _BarraBuscadoraState extends State<BarraBuscadora> {
               child: TextField(
                 controller: _controller,
                 onChanged: (texto) {
+                  // Si el usuario borró todo el texto del buscador principal
                   if (texto.trim().isEmpty) {
-                    widget.onBuscar(''); // Notifica inmediatamente que se limpió el texto
+                    widget.onBuscar(''); 
                   }
                 },
                 onSubmitted: (v) {
@@ -265,7 +266,8 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
       _municipioExpandido = false;
       _fechaExpandida = false;
     });
-   // Limpia también el estado en el controller global y restaura los servicios
+    
+    // Limpia también el estado en el controller global y restaura los servicios
     final catalogo = context.read<CatalogController>();
     catalogo.limpiarFiltros();
     

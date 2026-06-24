@@ -233,11 +233,9 @@ class CatalogController extends ChangeNotifier {
     _advertencia = null;
     _ultimosOcupados = null;
     
-    // CORRECCIÓN: Restablecemos los resultados al catálogo original completo y notificamos
     _resultados = List.of(_todos); 
     notifyListeners();
   }
-
   @override
   void dispose() {
     _suscripcion?.cancel();
