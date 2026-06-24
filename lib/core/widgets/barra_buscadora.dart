@@ -245,16 +245,16 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
     super.dispose();
   }
 
-  // ── Acciones ─────────────────────────────────────────────────────────────
+// ── Acciones ─────────────────────────────────────────────────────────────
 
   void _buscar() {
     final catalogo = context.read<CatalogController>();
     catalogo.actualizarPresupuesto(_presupuestoCtrl.text);
     catalogo.actualizarTiposAlojamiento(_tipos);
     catalogo.actualizarTransporte(_conTransporte ? true : null);
-    catalogo.buscar();
-    widget.onCerrar();
-    widget.onNavegar?.call();
+    catalogo.buscar(); // Esto ya ejecuta notifyListeners()
+    widget.onCerrar(); // Cierra el overlay flotante de filtros
+    // widget.onNavegar?.call(); <-- ELIMINADO para evitar navegación reactiva externa
   }
 
   void _limpiar() {
@@ -271,9 +271,8 @@ class _PanelFiltrosState extends State<_PanelFiltros> {
     final catalogo = context.read<CatalogController>();
     catalogo.limpiarFiltros();
     
-    // Ejecuta el callback original para avisar a las pantallas contenedoras
-    widget.onCerrar();
-    widget.onNavegar?.call();
+    widget.onCerrar(); // Cierra el overlay
+    // widget.onNavegar?.call(); <-- ELIMINADO para que se restaure en la misma pantalla
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
