@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/feedback_helper.dart';
@@ -272,11 +273,24 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   Widget _campoTexto(String etiqueta, TextEditingController controller) {
+    // Detectamos si el campo actual es el de Nombre o Apellido
+    final esNombreOApellido = etiqueta == 'Nombre' || etiqueta == 'Apellido';
+
     return TextFormField(
       controller: controller,
       style: const TextStyle(color: AppColors.blanco),
       decoration: InputDecoration(labelText: etiqueta),
+      
+      // 1. Bloqueo en tiempo real (No deja escribir números)
+      inputFormatters: esNombreOApellido 
+          ? [FilteringTextInputFormatter.deny(RegExp(r'[0-9]'))] 
+          : null,
+          
+      // 2. Validación formal al presionar el botón de Registrarse
       validator: (valor) {
+        if (esNombreOApellido) {
+          return Validadores.validarNombreOApellido(valor, etiqueta.toLowerCase());
+        }
         if (valor == null || valor.trim().isEmpty) return 'Campo obligatorio.';
         return null;
       },

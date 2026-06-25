@@ -1,175 +1,50 @@
-/// Estructura de datos estandarizada de la división político-territorial de
-/// Venezuela: 23 estados + Distrito Capital + Dependencias Federales (25
-/// entidades en total) con sus municipios/territorios insulares. Es la única
-/// fuente permitida para los campos "Estado" y "Municipio" en todo el sistema
-/// (registro, publicación de servicios, filtros de búsqueda y perfil).
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// Estructura de datos dinámica de la división político-territorial de
+/// Venezuela provista desde Cloud Firestore (Colección 'estados').
 class VenezuelaGeo {
   VenezuelaGeo._();
 
-  static const Map<String, List<String>> estadosYMunicipios = {
-    'Amazonas': [
-      'Alto Orinoco', 'Atabapo', 'Atures', 'Autana', 'Manapiare', 'Maroa',
-      'Río Negro',
-    ],
-    'Anzoátegui': [
-      'Anaco', 'Aragua', 'Diego Bautista Urbaneja', 'Fernando Peñalver',
-      'Francisco de Miranda', 'Francisco del Carmen Carvajal', 'Guanta',
-      'Independencia', 'José Gregorio Monagas', 'Juan Antonio Sotillo',
-      'Juan Manuel Cajigal', 'Libertad', 'Manuel Ezequiel Bruzual',
-      'Pedro María Freites', 'Píritu', 'San José de Guanipa',
-      'San Juan de Capistrano', 'Santa Ana', 'Simón Bolívar',
-      'Simón Rodríguez', 'Sir Arthur McGregor',
-    ],
-    'Apure': [
-      'Achaguas', 'Biruaca', 'Muñoz', 'Páez', 'Pedro Camejo',
-      'Rómulo Gallegos', 'San Fernando',
-    ],
-    'Aragua': [
-      'Bolívar', 'Camatagua', 'Francisco Linares Alcántara', 'Girardot',
-      'José Ángel Lamas', 'José Félix Ribas', 'José Rafael Revenga',
-      'Libertador', 'Mario Briceño Iragorry', 'Ocumare de la Costa de Oro',
-      'San Casimiro', 'San Sebastián', 'Santiago Mariño', 'Santos Michelena',
-      'Sucre', 'Tovar', 'Urdaneta', 'Zamora',
-    ],
-    'Barinas': [
-      'Alberto Arvelo Torrealba', 'Andrés Eloy Blanco',
-      'Antonio José de Sucre', 'Arismendi', 'Barinas', 'Bolívar',
-      'Cruz Paredes', 'Ezequiel Zamora', 'Obispos', 'Pedraza', 'Rojas',
-      'Sosa',
-    ],
-    'Bolívar': [
-      'Angostura', 'Angostura del Orinoco', 'Caroní', 'Cedeño', 'El Callao',
-      'Gran Sabana', 'Padre Pedro Chien', 'Piar', 'Roscio', 'Sifontes',
-      'Sucre',
-    ],
-    'Carabobo': [
-      'Bejuma', 'Carlos Arvelo', 'Diego Ibarra', 'Guacara', 'Juan José Mora',
-      'Libertador', 'Los Guayos', 'Miranda', 'Montalbán', 'Naguanagua',
-      'Puerto Cabello', 'San Diego', 'San Joaquín', 'Valencia',
-    ],
-    'Cojedes': [
-      'Anzoátegui', 'Ezequiel Zamora', 'Girardot', 'Lima Blanco',
-      'Pao de San Juan Bautista', 'Ricaurte', 'Rómulo Gallegos', 'Tinaco',
-      'Tinaquillo',
-    ],
-    'Delta Amacuro': [
-      'Antonio Díaz', 'Casacoima', 'Pedernales', 'Tucupita',
-    ],
-    'Dependencias Federales': [
-      'Archipiélago Las Aves de Barlovento',
-      'Archipiélago Las Aves de Sotavento',
-      'Archipiélago Los Monjes',
-      'Archipiélago Los Roques',
-      'Isla La Blanquilla',
-      'Isla La Orchila',
-      'Isla La Sola',
-      'Isla La Tortuga',
-      'Islas Los Frailes',
-      'Islas Los Hermanos',
-      'Islas Los Testigos',
-      'Islote Aves de Barlovento',
-    ],
-    'Distrito Capital': [
-      'Libertador',
-    ],
-    'Falcón': [
-      'Acosta', 'Bolívar', 'Buchivacoa', 'Cacique Manaure', 'Carirubana',
-      'Colina', 'Dabajuro', 'Democracia', 'Falcón', 'Federación', 'Jacura',
-      'José Laurencio Silva', 'Los Taques', 'Mauroa', 'Miranda',
-      'Monseñor Iturriza', 'Palmasola', 'Petit', 'Píritu', 'San Francisco',
-      'Sucre', 'Tocópero', 'Unión', 'Urumaco', 'Zamora',
-    ],
-    'Guárico': [
-      'Camaguán', 'Chaguaramas', 'El Socorro', 'José Félix Ribas',
-      'José Tadeo Monagas', 'Juan Germán Roscio', 'Julián Mellado',
-      'Las Mercedes', 'Leonardo Infante', 'Ortiz', 'Pedro Zaraza',
-      'San Gerónimo de Guayabal', 'San José de Guaribe',
-      'Santa María de Ipire', 'Miranda',
-    ],
-    'La Guaira': [
-      'Vargas',
-    ],
-    'Lara': [
-      'Andrés Eloy Blanco', 'Crespo', 'Iribarren', 'Jiménez', 'Morán',
-      'Palavecino', 'Simón Planas', 'Torres', 'Urdaneta',
-    ],
-    'Mérida': [
-      'Alberto Adriani', 'Andrés Bello', 'Antonio Pinto Salinas', 'Aricagua',
-      'Arzobispo Chacón', 'Campo Elías', 'Caracciolo Parra Olmedo',
-      'Cardenal Quintero', 'Guaraque', 'Julio César Salas', 'Justo Briceño',
-      'Libertador', 'Miranda', 'Obispo Ramos de Lora', 'Padre Noguera',
-      'Pueblo Llano', 'Rangel', 'Rivas Dávila', 'Santos Marquina', 'Sucre',
-      'Tovar', 'Tulio Febres Cordero', 'Zea',
-    ],
-    'Miranda': [
-      'Acevedo', 'Andrés Bello', 'Baruta', 'Brión', 'Buroz', 'Carrizal',
-      'Chacao', 'Cristóbal Rojas', 'El Hatillo', 'Guaicaipuro',
-      'Independencia', 'Lander', 'Los Salias', 'Páez', 'Paz Castillo',
-      'Pedro Gual', 'Plaza', 'Simón Bolívar', 'Sucre', 'Urdaneta', 'Zamora',
-    ],
-    'Monagas': [
-      'Acosta', 'Aguasay', 'Bolívar', 'Caripe', 'Cedeño', 'Ezequiel Zamora',
-      'Libertador', 'Maturín', 'Piar', 'Punceres', 'Santa Bárbara',
-      'Sotillo', 'Uracoa',
-    ],
-    'Nueva Esparta': [
-      'Antolín del Campo', 'Arismendi', 'Díaz', 'García', 'Gómez', 'Maneiro',
-      'Marcano', 'Mariño', 'Península de Macanao', 'Tubores', 'Villalba',
-    ],
-    'Portuguesa': [
-      'Agua Blanca', 'Araure', 'Esteller', 'Guanare', 'Guanarito',
-      'Monseñor José Vicente de Unda', 'Ospino', 'Páez', 'Papelón',
-      'San Genaro de Boconoíto', 'San Rafael de Onoto', 'Santa Rosalía',
-      'Sucre', 'Turén',
-    ],
-    'Sucre': [
-      'Andrés Eloy Blanco', 'Andrés Mata', 'Arismendi', 'Benítez',
-      'Bermúdez', 'Bolívar', 'Cajigal', 'Cruz Salmerón Acosta', 'Libertador',
-      'Mariño', 'Mejía', 'Montes', 'Ribero', 'Sucre', 'Valdez',
-    ],
-    'Táchira': [
-      'Andrés Bello', 'Antonio Rómulo Costa', 'Ayacucho', 'Bolívar',
-      'Cárdenas', 'Córdoba', 'Fernández Feo', 'Francisco de Miranda',
-      'García de Hevia', 'Guásimos', 'Independencia', 'Jáuregui',
-      'José María Vargas', 'Junín', 'Libertad', 'Libertador', 'Lobatera',
-      'Michelena', 'Panamericano', 'Pedro María Ureña', 'Rafael Urdaneta',
-      'Samuel Darío Maldonado', 'San Cristóbal', 'San Judas Tadeo',
-      'Seboruco', 'Simón Rodríguez', 'Sucre', 'Torbes', 'Uribante',
-    ],
-    'Trujillo': [
-      'Andrés Bello', 'Boconó', 'Bolívar', 'Candelaria', 'Carache',
-      'Escuque', 'José Felipe Márquez Cañizales', 'Juan Vicente Campo Elías',
-      'La Ceiba', 'Miranda', 'Monte Carmelo', 'Motatán', 'Pampán',
-      'Pampanito', 'Rafael Rangel', 'San Rafael de Carvajal', 'Sucre',
-      'Trujillo', 'Urdaneta', 'Valera',
-    ],
-    'Yaracuy': [
-      'Arístides Bastidas', 'Bolívar', 'Bruzual', 'Cocorote',
-      'Independencia', 'José Antonio Páez', 'La Trinidad', 'Manuel Monge',
-      'Nirgua', 'Peña', 'San Felipe', 'Sucre', 'Urachiche', 'Veroes',
-    ],
-    'Zulia': [
-      'Almirante Padilla', 'Baralt', 'Cabimas', 'Catatumbo', 'Colón',
-      'Francisco Javier Pulgar', 'Guajira', 'Jesús Enrique Lossada',
-      'Jesús María Semprún', 'La Cañada de Urdaneta', 'Lagunillas',
-      'Machiques de Perijá', 'Mara', 'Maracaibo', 'Miranda',
-      'Rosario de Perijá', 'San Francisco', 'Santa Rita', 'Simón Bolívar',
-      'Sucre', 'Valmore Rodríguez',
-    ],
-  };
+  /// Caché en memoria para evitar llamadas redundantes a Firestore
+  static final Map<String, List<String>> _estadosYMunicipios = {};
+
+  /// Carga la data geográfica desde Firebase Firestore
+  static Future<void> cargarDesdeFirestore() async {
+    if (_estadosYMunicipios.isNotEmpty) return; // Ya cargado
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('estados').get();
+      _estadosYMunicipios.clear();
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        // Asumiendo que el campo dentro del documento se llama 'municipios'
+        final List<dynamic> muniList = data['municipios'] ?? [];
+        _estadosYMunicipios[doc.id] = muniList.map((e) => e.toString()).toList()..sort();
+      }
+    } catch (e) {
+      // Contingencia defensiva por si falla la red en el primer frame
+      _estadosYMunicipios['Distrito Capital'] = ['Libertador'];
+      _estadosYMunicipios['Miranda'] = ['Chacao', 'Baruta', 'Sucre'];
+    }
+  }
 
   /// Lista ordenada de entidades federales.
-  static List<String> get estados => estadosYMunicipios.keys.toList();
+  static List<String> get estados {
+    final lista = _estadosYMunicipios.keys.toList();
+    lista.sort();
+    return lista;
+  }
 
   /// Municipios de un estado; lista vacía si el estado no existe.
   static List<String> municipiosDe(String? estado) {
     if (estado == null) return const [];
-    return estadosYMunicipios[estado] ?? const [];
+    return _estadosYMunicipios[estado] ?? const [];
   }
 
-  /// Valida que el par estado/municipio pertenezca a la estructura oficial.
+  /// Validación estricta de procedencia geográfica (RF02).
   static bool esUbicacionValida(String? estado, String? municipio) {
     if (estado == null || municipio == null) return false;
-    return municipiosDe(estado).contains(municipio);
+    final munis = _estadosYMunicipios[estado];
+    if (munis == null) return false;
+    return munis.contains(municipio);
   }
 }

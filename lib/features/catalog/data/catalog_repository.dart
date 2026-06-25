@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/utils/app_exception.dart';
 import '../../../models/ocupacion.dart';
 import '../../../models/servicio.dart';
+import '../../../core/data/venezuela_geo.dart'; 
 
 /// Capa de datos del buscador y catálogo (RF02/RF03/RF10/RF11).
 class CatalogRepository {
@@ -12,7 +13,11 @@ class CatalogRepository {
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Stream en tiempo real de los servicios publicados (estado "Activo").
+  /// Stream en tiempo real de los servicios publicados (estado "Activo").
   Stream<List<Servicio>> serviciosActivos() {
+    // Disparar de forma asíncrona la hidratación de datos de VenezuelaGeo desde Firestore
+    VenezuelaGeo.cargarDesdeFirestore();
+
     return _firestore
         .collection('servicios')
         .where('estadoPublicacion', isEqualTo: EstadosPublicacion.activo)

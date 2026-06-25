@@ -39,7 +39,13 @@ class _DestinosScreenState extends State<DestinosScreen> {
   }
 
   void _buscar(String texto) {
-    setState(() => _filtroEstado = texto.trim().toLowerCase());
+    final limpio = texto.trim().toLowerCase();
+    setState(() => _filtroEstado = limpio);
+    
+    if (limpio.isEmpty) {
+      // Si se limpió la barra buscadora, reseteamos el catálogo global
+      context.read<CatalogController>().limpiarFiltros();
+    }
   }
 
   @override

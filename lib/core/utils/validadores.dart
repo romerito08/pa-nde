@@ -42,4 +42,15 @@ class Validadores {
     if (numeros < 4) return 'Debe tener al menos 4 números.';
     return null;
   }
+  /// Valida que una cadena contenga solo letras y espacios (sin números ni caracteres especiales)
+  static String? validarNombreOApellido(String? v, String campo) {
+    if (v == null || v.trim().isEmpty) return 'Campo obligatorio.';
+    
+    // RegEx que permite solo letras (incluyendo acentos, la ñ y espacios)
+    final RegExp soloLetras = RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$');
+    if (!soloLetras.hasMatch(v.trim())) {
+      return 'El $campo no puede contener números ni caracteres especiales.';
+    }
+    return null;
+  }
 }

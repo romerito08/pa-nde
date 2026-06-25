@@ -34,24 +34,28 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
     });
   }
 
-  void _buscar(String texto) {
+void _buscar(String texto) {
     final consulta = texto.trim().toLowerCase();
-    if (consulta.isEmpty) return;
-
     final catalogo = context.read<CatalogController>();
+    
+    // Si la consulta está vacía, limpia filtros y restaura la data inicial
+    if (consulta.isEmpty) {
+      catalogo.limpiarFiltros();
+      return;
+    }
+
     catalogo.actualizarTexto(consulta);
 
-    // 1. Coincide con un Estado → ir a Destinos con filtro geográfico.
+    // 1. Coincide con un Estado → Actualizar ubicación y filtrar localmente
     for (final estado in VenezuelaGeo.estados) {
       if (estado.toLowerCase().contains(consulta)) {
         catalogo.actualizarUbicacion(estado, null);
         catalogo.buscarLocalmente();
-        Navigator.of(context).pushNamed('/destinos');
-        return;
+        return; // Eliminado el Navigator
       }
     }
 
-    // 2. Coincide con un Municipio → ir a Destinos con filtro geográfico.
+    // 2. Coincide con un Municipio → Actualizar ubicación y filtrar localmente
     String? municipioEncontrado;
     String? estadoDelMunicipio;
     busqueda:
@@ -67,35 +71,19 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
     if (municipioEncontrado != null) {
       catalogo.actualizarUbicacion(estadoDelMunicipio, municipioEncontrado);
       catalogo.buscarLocalmente();
-      Navigator.of(context).pushNamed('/destinos');
-      return;
+      return; // Eliminado el Navigator
     }
 
-    // 3. Búsqueda por nombre / descripción → ir a la categoría con más resultados.
+    // 3. Búsqueda por nombre / descripción / texto libre directo en la pantalla
     catalogo.buscarLocalmente();
-    _navegarPorResultados(catalogo);
   }
 
-  void _navegarPorResultados(CatalogController catalogo) {
-    final experiencias = catalogo.resultados
-        .where((s) => s.tipo == TiposServicio.experiencia)
-        .length;
-    final alojamientos = catalogo.resultados
-        .where((s) => s.tipo == TiposServicio.alojamiento)
-        .length;
-    if (experiencias > alojamientos) {
-      Navigator.of(context).pushNamed('/experiencias');
-    } else {
-      Navigator.of(context).pushNamed('/alojamientos');
-    }
-  }
-
+  // Al hacer clic en una tarjeta de "Descubre Venezuela" tampoco queremos cambiar de pantalla
   void _irADestino(String estado) {
     final catalogo = context.read<CatalogController>();
     catalogo.actualizarUbicacion(estado, null);
     catalogo.buscarLocalmente();
-    Navigator.of(context).pushNamed('/destinos');
-  }
+  } 
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +181,7 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
     );
   }
 
-  // ---------------------------------------------------------- BUSCADOR
+ // ---------------------------------------------------------- BUSCADOR
   Widget _buscador(bool esMovil) {
     return Container(
       color: AppColors.verdeOscuro,
@@ -212,8 +200,10 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
               const SizedBox(height: 12),
               BarraBuscadora(
                 onBuscar: _buscar,
-                onFiltrosAplicados: () =>
-                    _navegarPorResultados(context.read<CatalogController>()),
+                onFiltrosAplicados: () {
+                  // Dejar vacío. El CatalogController al cambiar su estado notificará 
+                  // a context.watch en esta pantalla y actualizará los GridView en tiempo real.
+                },
               ),
             ],
           ),
@@ -221,7 +211,6 @@ class _ExploradorInicioScreenState extends State<ExploradorInicioScreen> {
       ),
     );
   }
-
   // ----------------------------------------------- DESCUBRE VENEZUELA
   Widget _descubreVenezuela(bool esMovil) {
     final catalogo = context.watch<CatalogController>();

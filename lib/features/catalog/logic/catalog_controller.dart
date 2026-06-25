@@ -232,10 +232,10 @@ class CatalogController extends ChangeNotifier {
     _filtrosAplicados = false;
     _advertencia = null;
     _ultimosOcupados = null;
-    _resultados = List.of(_todos);
+    
+    _resultados = List.of(_todos); 
     notifyListeners();
   }
-
   @override
   void dispose() {
     _suscripcion?.cancel();
